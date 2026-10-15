@@ -53,3 +53,10 @@ it('uppercase option', () => {
 it('whitespace-only text has no bbox', () => {
   expect(layoutText(fonts.bold, '  \n ', { capHeight: 40 }).bbox).toBeNull();
 });
+
+it('path data never contains NaN (opentype 2.0.0 rounding bug on values like 1e-15)', () => {
+  for (let cap = 5; cap <= 60; cap += 1) {
+    const { lines } = layoutText(fonts.regular, 'Popolo\ndell’', { capHeight: cap, lineHeight: 0.82, tracking: -0.02 });
+    for (const line of lines) expect(line.d).not.toContain('NaN');
+  }
+});

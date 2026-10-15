@@ -10,6 +10,8 @@ import {
   closedCatmullRomPath,
   sampleClosedCatmullRom,
   simplifyPolygon,
+  boundsOf,
+  distanceToOutline,
 } from '../src/geometry.js';
 
 it('hull drops interior points', () => {
@@ -58,4 +60,15 @@ it('simplifyPolygon removes nearly straight vertices and caps the count', () => 
   expect(simple.length).toBeGreaterThanOrEqual(12);
   const square = [...rectPolygon(0, 0, 10, 10), { x: 5, y: 0 }];
   expect(simplifyPolygon(convexHull(square), 0.01, 40)).toHaveLength(4);
+});
+
+it('boundsOf returns the axis-aligned box', () => {
+  expect(boundsOf([{ x: 1, y: 2 }, { x: 5, y: -1 }, { x: 3, y: 7 }])).toEqual({ x: 1, y: -1, width: 4, height: 8 });
+});
+
+it('distanceToOutline is the distance to the nearest edge of a closed outline', () => {
+  const sq = rectPolygon(0, 0, 10, 10);
+  expect(distanceToOutline({ x: 5, y: 5 }, sq)).toBeCloseTo(5);
+  expect(distanceToOutline({ x: 1, y: 5 }, sq)).toBeCloseTo(1);
+  expect(distanceToOutline({ x: 13, y: 14 }, sq)).toBeCloseTo(5);
 });

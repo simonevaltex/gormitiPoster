@@ -1,5 +1,20 @@
 // Text → SVG outlines with opentype.js. Sizes are in mm; y grows downwards and the first
 // baseline sits at y = 0.
+import { fmt } from './svg.js';
+
+// opentype.js 2.0.0's Path.toPathData prints NaN for coordinates whose fractional part is tiny
+// float noise (its rounding helper builds "1e-15e+2"), and it flips paths by default; so the
+// glyph commands are serialised here instead.
+function pathData(commands) {
+  let d = '';
+  for (const c of commands) {
+    if (c.type === 'M' || c.type === 'L') d += `${c.type}${fmt(c.x)} ${fmt(c.y)}`;
+    else if (c.type === 'Q') d += `Q${fmt(c.x1)} ${fmt(c.y1)} ${fmt(c.x)} ${fmt(c.y)}`;
+    else if (c.type === 'C') d += `C${fmt(c.x1)} ${fmt(c.y1)} ${fmt(c.x2)} ${fmt(c.y2)} ${fmt(c.x)} ${fmt(c.y)}`;
+    else if (c.type === 'Z') d += 'Z';
+  }
+  return d;
+}
 
 export function fontSizeForCapHeight(font, capMm) {
   const cap = font.tables.os2?.sCapHeight || font.charToGlyph('H').getBoundingBox().y2;
@@ -27,8 +42,7 @@ export function layoutText(font, text, { capHeight, lineHeight = 0.92, tracking 
     });
     const b = path.getBoundingBox();
     const box = { x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2 };
-    // flipY must be off: opentype.js 2 otherwise mirrors the path around its own bbox.
-    lines.push({ d: path.toPathData({ decimalPlaces: 2, flipY: false }), bbox: box });
+    lines.push({ d: pathData(path.commands), bbox: box });
     bbox = bbox ? union(bbox, box) : box;
   });
   return { lines, bbox, fontSize };

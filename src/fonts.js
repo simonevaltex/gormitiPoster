@@ -1,4 +1,6 @@
-import { parse } from 'opentype.js';
+// The ESM build directly: plain Node (scripts) would otherwise pick the CommonJS `main`, which has
+// no named exports. opentype.js is pinned to an exact version in package.json.
+import { parse } from 'opentype.js/dist/opentype.mjs';
 
 // Static TTFs in public/fonts/ (opentype.js reads neither WOFF2 nor variable fonts).
 export const FONT_FILES = {
