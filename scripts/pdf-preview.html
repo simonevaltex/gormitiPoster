@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Anteprima PDF (verifica)</title>
+  </head>
+  <!-- Dev-only page used by scripts/verify.mjs to render an exported PDF with pdf.js. -->
+  <body style="margin: 0; background: #fff">
+    <canvas id="page"></canvas>
+    <script type="module">
+      import * as pdfjs from 'pdfjs-dist';
+      import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+      window.renderPdf = async (base64, scale = 2) => {
+        const data = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const pdf = await pdfjs.getDocument({ data }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.getElementById('page');
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
+        await page.render({ canvas, canvasContext: canvas.getContext('2d'), viewport }).promise;
+        return { width: canvas.width, height: canvas.height };
+      };
+      window.previewReady = true;
+    </script>
+  </body>
+</html>

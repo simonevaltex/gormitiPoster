@@ -8,6 +8,7 @@ import { bindSheetTools } from './attractors.js';
 import { createPanels } from './ui/panels.js';
 import { createHeader, loadStoredColors } from './ui/header.js';
 import { createArchive } from './archive.js';
+import { createExportDialog } from './ui/export-dialog.js';
 import { showStatus } from './ui/status.js';
 import { isTyping } from './ui/dom.js';
 import { STEP_MS } from './constants.js';
@@ -33,20 +34,25 @@ document.getElementById('fit').addEventListener('click', () => view.fit());
 const tools = bindSheetTools(view, store, model);
 createPanels({ root: document.getElementById('panel'), store, model, tools });
 
+const exportDialog = createExportDialog({ root: document.getElementById('export-modal'), fonts });
+// The current sheet exports with the number it has (or will get) in the archive.
+const currentRecipe = () =>
+  model.toRecipe({ id: s.poster.id ?? 'foglio', number: model.displayNumber(), date: new Date().toISOString() });
+
 const archive = createArchive({
   store,
   model,
   fonts,
   root: document.getElementById('archive'),
   toggleButton: document.getElementById('open-archive'),
-  onExport: () => showStatus('Esportazione in arrivo'),
+  onExport: (recipe) => recipe && exportDialog.show(recipe),
 });
 
 createHeader({
   store,
   onSave: () => archive.save(),
   onToggleArchive: () => archive.toggle(),
-  onExport: () => showStatus('Esportazione in arrivo'),
+  onExport: () => exportDialog.show(currentRecipe()),
 });
 
 // Elements appear/disappear and jump to their pose whenever the model rebuilds the world.

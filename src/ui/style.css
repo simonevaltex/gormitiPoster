@@ -731,3 +731,33 @@ button[aria-expanded='true'] {
   padding: 7px 8px;
   font-size: 11px;
 }
+
+/* ---------- export dialog (no dimming: the backdrop just catches clicks) ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 10;
+}
+
+.dialog {
+  display: grid;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 20px;
+  background: var(--carta);
+  border: 2px solid var(--inchiostro);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dialog-head h2 {
+  margin: 0;
+}
