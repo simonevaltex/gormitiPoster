@@ -104,6 +104,38 @@ arrivate da un server andranno sanificate prima di inserirle nella pagina.
   (420 + 2·bleed + 20) mm; senza segni (297 + 2·bleed) × (420 + 2·bleed) mm.
 - Nome file: `gormiti-poster-012.pdf`.
 
+## Figure dei Gormiti (SVG)
+
+Le figure sono gli SVG in `public/assets/gormiti/`. Basta copiare il file nella cartella e
+ricaricare la pagina: compare nel menu **Figura** del tipo Gormita, con il nome preso dal nome del
+file (`sommoLuminescente.svg` o `sommo-luminescente.svg` → «Sommo Luminescente»). L'elenco per il
+browser (`assets/manifest.json`) si genera da solo, in sviluppo e nella build: non va scritto a mano.
+L'ultima voce del menu resta il segnaposto generato dal nome.
+
+Il file contiene **solo il disegno**: i due contorni (2 mm di carta attaccati al disegno, poi 2 mm di
+inchiostro) li disegna il sito, uguali su ogni figura qualunque sia la larghezza scelta
+(`FIGURE_RING_MM` in `src/svg-figure.js`). Seguono la sagoma esterna, buchi compresi; per gli urti
+conta l'involucro convesso della sagoma con i contorni.
+
+Come preparare il file in Illustrator:
+
+- Documento RGB, solo `#000000` e `#ffffff`: il nero diventa inchiostro e il bianco carta. Un
+  colore scuro qualsiasi conta come nero e uno chiaro come bianco (il nero K100 di un documento
+  CMYK, `#231f20`, è nero).
+- Forme piene: tracciati convertiti in forme (Oggetto › Tracciato › Contorno traccia). I tratti
+  funzionano, ma i contorni del sito seguono meglio le forme piene.
+- Niente sfumature, trasparenze, effetti, immagini, testo vivo, maschere di ritaglio (le parti
+  nascoste conterebbero per i contorni), niente rettangolo di sfondo: ogni forma del file fa parte
+  della figura. Le cose non supportate vengono ignorate con un avviso in console.
+- Figura dritta: il lato basso della tavola è quello che si gira verso la gravità.
+- Tavola adattata al disegno; la misura non conta, la decide il campo Larghezza.
+- File › Esporta › Esporta come › SVG; vanno bene sia «CSS interno» sia «Attributi di
+  presentazione».
+
+Il nome del file è anche l'identificativo salvato nei poster: rinominando un file, i poster già
+salvati con quella figura tornano al segnaposto. `npm test` controlla che ogni SVG della cartella
+si legga senza problemi.
+
 ## Font
 
 Geist e Geist Mono (statici TTF, licenza SIL Open Font License, vedi `public/fonts/OFL.txt`),
@@ -118,6 +150,8 @@ src/model.js         azioni senza DOM: Genera, Annulla, Svuota, attrattori, rice
 src/physics.js       mondo Matter, campo gravitazionale, orientamento
 src/field.js         matematica del campo (pura)
 src/elements/        un modulo per tipo: popolo, stemma, gormita, testo (Nome e Alias), numero
+src/svg-figure.js    SVG di Simone → figura: lettura, colori, contorni del sito, miniature
+src/figures.js       carica le figure elencate in assets/manifest.json
 src/text.js          opentype: misura e tracciati
 src/sheet-view.js    il foglio SVG, zoom e pan
 src/attractors.js    attrattori: guide e strumenti sul foglio
@@ -127,12 +161,15 @@ src/storage/         adattatore di salvataggio (local.js ora, api.js in futuro)
 src/export.js        PDF e SVG
 src/recipe.js        ricetta → SVG (export e miniature)
 src/ui/              header, pannelli, dialoghi, stile
+scripts/assets-manifest.mjs  elenco delle figure (servito in sviluppo, scritto nella build)
 ```
 
 ## Fase 2
 
-- I segnaposto si sostituiscono con gli SVG di Simone: ogni elemento restituisce
-  `{ markup, collisionPolygon, bounds }`, quindi basta cambiare la sorgente (per il lettering del
-  Popolo la funzione da sostituire è `popoloLettering` in `src/elements/popolo.js`).
+- Gormiti: fatto (vedi «Figure dei Gormiti»).
+- Popoli e stemmi: le cartelle `public/assets/popoli/` e `stemmi/` esistono ma non vengono ancora
+  lette. Ogni elemento restituisce `{ markup, collisionPolygon, bounds }`, quindi basta cambiare la
+  sorgente (per il lettering del Popolo la funzione da sostituire è `popoloLettering` in
+  `src/elements/popolo.js`).
 - Archivio condiviso su Vercel: implementare `src/storage/api.js` (vedi sopra).
 - Eventuale conversione CMYK per la stampa.
