@@ -2,12 +2,14 @@ import { it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import svgpath from 'svgpath';
 import { fileURLToPath } from 'node:url';
-import { parseFigureSvg, buildFigure, inkOrPaper, FIGURE_RING_MM } from '../src/svg-figure.js';
+import { parseFigureSvg, buildFigure, inkOrPaper, FIGURE_PAPER_MM } from '../src/svg-figure.js';
+import { OUTLINE_MM } from '../src/constants.js';
 import { scanAssets } from '../scripts/assets-manifest.mjs';
 import { screenPaint, exportPaint } from '../src/paint.js';
 import { convexHull } from '../src/geometry.js';
 
 const ASSETS = new URL('../public/assets/', import.meta.url);
+const OUTER_MM = FIGURE_PAPER_MM + OUTLINE_MM; // from the edge of the drawing to the outside of the ink line
 
 // Shaped like an Illustrator export: XML declaration, generator comment, internal CSS.
 const svg = (body, head = '') =>
@@ -127,22 +129,23 @@ it('a file with nothing to draw is refused', () => {
 
 it('scales the figure to the width asked for, rings included', () => {
   const el = buildFigure(block(), 180, { paint: screenPaint });
-  const s = (180 - 4 * FIGURE_RING_MM) / 100;
+  const s = (180 - 2 * OUTER_MM) / 100;
   expect(scaleOf(el.markup)).toBeCloseTo(s, 6);
   expect(el.bounds.width).toBeCloseTo(180, 6);
-  expect(el.bounds.height).toBeCloseTo(50 * s + 4 * FIGURE_RING_MM, 6);
+  expect(el.bounds.height).toBeCloseTo(50 * s + 2 * OUTER_MM, 6);
   expect(convexHull(el.collisionPolygon)).toHaveLength(el.collisionPolygon.length);
 });
 
-it('the rings are the same in mm at any size: an ink ring outside a paper ring, under the drawing', () => {
+it('the rings are the same in mm at any size: a paper band, then the ink outline of Nome, under the drawing', () => {
   for (const width of [90, 180, 400]) {
     const { markup } = buildFigure(block(), width, { paint: screenPaint });
     const [ink, paper] = rings(markup);
     const drawing = 100 * scaleOf(markup);
     expect(ink.attrs).toBe('class="fi"');
     expect(paper.attrs).toBe('class="fp"');
-    expect(Math.abs(ink.width - (drawing + 4 * FIGURE_RING_MM))).toBeLessThan(0.15);
-    expect(Math.abs(paper.width - (drawing + 2 * FIGURE_RING_MM))).toBeLessThan(0.15);
+    expect(Math.abs(ink.width - (drawing + 2 * OUTER_MM))).toBeLessThan(0.15);
+    expect(Math.abs(paper.width - (drawing + 2 * FIGURE_PAPER_MM))).toBeLessThan(0.15);
+    expect(Math.abs((ink.width - paper.width) / 2 - OUTLINE_MM)).toBeLessThan(0.05); // as thick as Nome's
     expect(markup).not.toContain('stroke'); // filled outlines: cheap to draw, no thick strokes
   }
   const { markup } = buildFigure(block(), 180, { paint: screenPaint });

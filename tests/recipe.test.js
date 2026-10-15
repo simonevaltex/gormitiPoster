@@ -1,6 +1,7 @@
 import { it, expect, beforeAll } from 'vitest';
 import { composeSheetSvg, poseTransform, lightenSvg } from '../src/recipe.js';
-import { parseFigureSvg } from '../src/svg-figure.js';
+import { parseFigureSvg, FIGURE_PAPER_MM } from '../src/svg-figure.js';
+import { OUTLINE_MM } from '../src/constants.js';
 import { exportPaint, screenPaint } from '../src/paint.js';
 import { defaultParams } from '../src/elements/index.js';
 import { loadFontsFromDisk } from './helpers.js';
@@ -62,7 +63,7 @@ it('figures reach the builders; thumbnails are lighter and keep the exact figure
   r.elements.push({ id: 'e3', type: 'gormita', params: { figure: 'blocco', name: '', width: 120.3 }, x: 148.5, y: 300, angle: 0 });
   const { svg } = composeSheetSvg(r, { fonts, figures, paint });
   const scale = svg.match(/scale\(([\d.]+)\)/)[1];
-  expect(scale).toBe(String((120.3 - 8) / 100));
+  expect(scale).toBe(String((120.3 - 2 * (FIGURE_PAPER_MM + OUTLINE_MM)) / 100));
   const thumbnail = lightenSvg(composeSheetSvg(r, { fonts, figures, paint: screenPaint, detail: 'thumbnail' }).svg);
   expect(thumbnail).toContain(`scale(${scale})`);
   expect(thumbnail.replace(/scale\([^)]*\)/g, '')).not.toMatch(/\d\.\d\d/); // anything else: one decimal at most

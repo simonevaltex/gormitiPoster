@@ -112,9 +112,10 @@ file (`sommoLuminescente.svg` o `sommo-luminescente.svg` → «Sommo Luminescent
 browser (`assets/manifest.json`) si genera da solo, in sviluppo e nella build: non va scritto a mano.
 L'ultima voce del menu resta il segnaposto generato dal nome.
 
-Il file contiene **solo il disegno**: i due contorni (2 mm di carta attaccati al disegno, poi 2 mm di
-inchiostro) li disegna il sito, uguali su ogni figura qualunque sia la larghezza scelta
-(`FIGURE_RING_MM` in `src/svg-figure.js`). Seguono la sagoma esterna, buchi compresi; per gli urti
+Il file contiene **solo il disegno**: i contorni li disegna il sito, uguali su ogni figura
+qualunque sia la larghezza scelta: 2 mm di carta attaccati al disegno (`FIGURE_PAPER_MM` in
+`src/svg-figure.js`), poi una linea d'inchiostro spessa quanto il contorno delle lettere del Nome
+(`OUTLINE_MM` in `src/constants.js`, 0,5 mm: cambiandolo cambiano entrambi). Seguono la sagoma esterna, buchi compresi; per gli urti
 conta l'involucro convesso della sagoma con i contorni.
 
 Come preparare il file in Illustrator:

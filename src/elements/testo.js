@@ -1,11 +1,11 @@
 import { layoutText } from '../text.js';
 import { rectPolygon } from '../geometry.js';
+import { OUTLINE_MM } from '../constants.js';
 
 // Text blocks: one rigid body, however many lines. Always uppercase, Geist Regular (older
 // recipes keep the weight they were saved with). Two kinds, each with its own fixed style:
-// Alias (type 'testo', the key older recipes use) is solid ink, Nome is paper with a 0.5 mm ink
-// outline.
-export const OUTLINE_MM = 0.5;
+// Alias (type 'testo', the key older recipes use) is solid ink, Nome is paper with an ink outline
+// (OUTLINE_MM, shared with the figures).
 
 // Recipes saved before Nome existed carry the style themselves (older still: a paper fill
 // meant outline). New Alias blocks have no style and are ink.

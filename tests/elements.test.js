@@ -5,6 +5,7 @@ import { POPOLI } from '../src/popoli.js';
 import { screenPaint, exportPaint } from '../src/paint.js';
 import { convexHull, pointInPolygon } from '../src/geometry.js';
 import { parseFigureSvg } from '../src/svg-figure.js';
+import { OUTLINE_MM } from '../src/constants.js';
 import { loadFontsFromDisk } from './helpers.js';
 
 const BLOCK_SVG =
@@ -59,7 +60,8 @@ it('default sizes: stemma Ø20, numero Ø22, gormita 180 wide', () => {
   expect(buildElement('gormita', p.gormita, ctx()).bounds.width).toBeCloseTo(180, 0);
 });
 
-it('nome is outlined (0.5 mm ink), alias is solid ink', () => {
+it('nome is outlined (0.5 mm ink, the shared OUTLINE_MM), alias is solid ink', () => {
+  expect(OUTLINE_MM).toBe(0.5);
   const p = { text: 'Sommo', weight: 'regular', capHeight: 30 };
   const alias = buildElement('testo', p, ctx());
   const nome = buildElement('nome', p, ctx());

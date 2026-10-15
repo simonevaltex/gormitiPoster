@@ -6,8 +6,11 @@ import svgpath from 'svgpath';
 import ClipperLib from 'clipper-lib';
 import { boundsOf, convexHull, distanceToSegment, regularPolygon, simplifyPolygon } from './geometry.js';
 import { fmt } from './svg.js';
+import { OUTLINE_MM } from './constants.js';
 
-export const FIGURE_RING_MM = 2; // width of each ring: paper against the drawing, ink outside it
+// Around the drawing: a paper band, then the same ink outline as the letters of Nome.
+export const FIGURE_PAPER_MM = 2;
+const OUTER_MM = FIGURE_PAPER_MM + OUTLINE_MM;
 const RING_TOLERANCE_MM = 0.02; // how far the ring outlines may stray from the exact offset
 // Archive thumbnails are about 2 mm per pixel: they skip smaller shapes and simplify outlines.
 const THUMBNAIL_MIN_MM = 2;
@@ -433,10 +436,10 @@ export function parseFigureSvg(text) {
 
 // { markup, collisionPolygon, bounds } in mm, exactly `width` wide rings included. The drawing
 // keeps its own path data inside a scale group. Under it, two filled shapes: the silhouette grown
-// by two rings (ink), then by one (paper); the drawing on top covers them but for the bands.
+// by the paper band plus the outline (ink), then by the band alone (paper); the drawing on top
+// covers them but for the band and the outline.
 export function buildFigure(figure, width, { paint, detail }) {
-  const ring = FIGURE_RING_MM;
-  const s = Math.max(width - 4 * ring, 1) / figure.bounds.width;
+  const s = Math.max(width - 2 * OUTER_MM, 1) / figure.bounds.width;
   const thumbnail = detail === 'thumbnail';
   const minSize = thumbnail ? THUMBNAIL_MIN_MM / s : 0;
   const tolerance = (thumbnail ? THUMBNAIL_TOLERANCE_MM : RING_TOLERANCE_MM) / s;
@@ -447,8 +450,8 @@ export function buildFigure(figure, width, { paint, detail }) {
     .map((sh) => (thumbnail ? { ...sh, d: simplifiedPath(sh.d, tolerance) } : sh))
     .filter((sh) => sh.d);
   const rings =
-    `<path d="${ringOutline(figure, (2 * ring) / s, tolerance, digits)}" ${paint({ fill: 'ink' })}/>` +
-    `<path d="${ringOutline(figure, ring / s, tolerance, digits)}" ${paint({ fill: 'paper' })}/>`;
+    `<path d="${ringOutline(figure, OUTER_MM / s, tolerance, digits)}" ${paint({ fill: 'ink' })}/>` +
+    `<path d="${ringOutline(figure, FIGURE_PAPER_MM / s, tolerance, digits)}" ${paint({ fill: 'paper' })}/>`;
 
   // The drawing, in order; consecutive shapes with the same paint share a group.
   let drawing = '';
@@ -464,7 +467,7 @@ export function buildFigure(figure, width, { paint, detail }) {
   if (open !== null) drawing += '</g>';
 
   const markup = `<g transform="scale(${s})">${rings}${drawing}</g>`;
-  const disc = regularPolygon(2 * ring, 12);
+  const disc = regularPolygon(OUTER_MM, 12);
   const outer = convexHull(figure.hull.flatMap((p) => disc.map((q) => ({ x: p.x * s + q.x, y: p.y * s + q.y }))));
   return { markup, collisionPolygon: simplifyPolygon(outer, 0.02, 40), bounds: boundsOf(outer) };
 }

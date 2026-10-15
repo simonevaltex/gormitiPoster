@@ -16,6 +16,9 @@ export const DEFAULT_SETTINGS = { restitution: 0.05, friction: 0.8, solidAttract
 
 export const DEFAULT_SEGMENT = { type: 'segment', x1: 15, y1: 405, x2: 282, y2: 405, strength: 50 };
 
+// The ink outline drawn outside the letters of Nome, and outside the paper band of the figures.
+export const OUTLINE_MM = 0.5;
+
 // a = Σ strength·k / (d² + eps²) in mm/ms². k is calibrated so that a 40 mm block 200 mm from a
 // strength-50 point reaches it in about one second (see scripts/calibrate-field.mjs).
 export const FIELD = { eps: 20, k: 0.2565, maxAccel: 0.002 };
