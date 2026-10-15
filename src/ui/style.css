@@ -333,7 +333,7 @@ input[type='color']::-moz-color-swatch {
 
 :root {
   --column: 340px;
-  --header: 96px;
+  --header: 80px;
 }
 
 .topbar {
