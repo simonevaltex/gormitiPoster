@@ -1,7 +1,7 @@
 // Archive view (the "Archivio" tab): save the sheet as a recipe, list posters, reopen, export
 // or delete them.
 import { storage } from './storage/index.js';
-import { composeSheetSvg } from './recipe.js';
+import { composeSheetSvg, lightenSvg } from './recipe.js';
 import { screenPaint } from './paint.js';
 import { h } from './ui/dom.js';
 import { confirmButton } from './ui/inline-confirm.js';
@@ -10,10 +10,7 @@ import { showStatus } from './ui/status.js';
 export const nextPosterNumber = (items) => items.reduce((max, p) => Math.max(max, p.number || 0), 0) + 1;
 export const pad3 = (n) => String(n).padStart(3, '0');
 
-// Thumbnails stay light: one decimal (a tenth of a mm) is plenty at that size.
-const lighten = (svg) => svg.replace(/-?\d+\.\d+/g, (n) => String(+(+n).toFixed(1)));
-
-export function createArchive({ store, model, fonts, root, tabs, onExport }) {
+export function createArchive({ store, model, fonts, figures, root, tabs, onExport }) {
   const s = store.state;
   const list = h('ol', { class: 'archive-list' });
   root.append(h('h2', { class: 'visually-hidden' }, 'Archivio'), list);
@@ -45,7 +42,8 @@ export function createArchive({ store, model, fonts, root, tabs, onExport }) {
     const number = s.archive.nextNumber;
     const id = `p${Date.now().toString(36)}`;
     const recipe = model.toRecipe({ id, number, date: new Date().toISOString() });
-    recipe.thumbnail = lighten(composeSheetSvg(recipe, { fonts, paint: screenPaint, idPrefix: `thumb-${id}` }).svg);
+    const thumbnail = composeSheetSvg(recipe, { fonts, figures, paint: screenPaint, idPrefix: `thumb-${id}`, detail: 'thumbnail' });
+    recipe.thumbnail = lightenSvg(thumbnail.svg);
     try {
       await storage.save(recipe);
     } catch {

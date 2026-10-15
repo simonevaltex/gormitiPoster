@@ -4,7 +4,7 @@ import { exportPdf, exportSvg, downloadBlob, exportFileName } from '../export.js
 import { h, segmented, checkboxField } from './dom.js';
 import { showStatus } from './status.js';
 
-export function createExportDialog({ root, fonts }) {
+export function createExportDialog({ root, fonts, figures }) {
   let recipe = null;
   let opener = null;
   const state = { format: 'pdf', cropMarks: false };
@@ -66,7 +66,7 @@ export function createExportDialog({ root, fonts }) {
     download.disabled = true;
     download.textContent = 'Preparazione…';
     try {
-      const options = { fonts, cropMarks: state.cropMarks };
+      const options = { fonts, figures, cropMarks: state.cropMarks };
       const blob = state.format === 'pdf' ? await exportPdf(recipe, options) : exportSvg(recipe, options);
       downloadBlob(blob, name);
       showStatus(`Esportato ${name}`);

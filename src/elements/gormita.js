@@ -10,9 +10,11 @@ import {
   simplifyPolygon,
 } from '../geometry.js';
 import { fmt } from '../svg.js';
+import { buildFigure } from '../svg-figure.js';
 
-// Placeholder figure until Simone's SVGs arrive (phase 2). Everything is generated in a unit
-// space from the name, so the same name always gives the same figure.
+// A Gormita is one of Simone's figures (an SVG in public/assets/gormiti, see svg-figure.js) or,
+// with no figure chosen, a placeholder generated in a unit space from the name, so the same
+// name always gives the same shape.
 
 const CONTOUR = 0.035; // width of each of the two outer rings (paper, then ink)
 const LIMB = 0.12; // stroke width of arms and horns
@@ -90,9 +92,13 @@ function silhouette(shape) {
 export default {
   type: 'gormita',
   label: 'Gormita',
-  defaults: { name: 'Gormita', width: 180 },
-  validate: (p) => (normaliseName(p.name) ? null : 'empty-name'),
-  build({ name, width }, { paint }) {
+  defaults: { figure: '', name: 'Gormita', width: 180 },
+  validate: (p) => (p.figure || normaliseName(p.name) ? null : 'empty-name'),
+  build({ figure: id, name, width }, ctx) {
+    // A figure missing from the folder (an old poster) falls back to the placeholder.
+    const figure = id && ctx.figures?.get(id);
+    if (figure) return buildFigure(figure, width, ctx);
+    const { paint } = ctx;
     const shape = gormitaShape(name);
     const cloud = silhouette(shape);
     const s = width / boundsOf(cloud).width;

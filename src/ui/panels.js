@@ -108,7 +108,7 @@ function gravitySection({ store, model, tools }) {
 }
 
 // Fields of each element type; every change writes straight into state.genera.params[type].
-function typeFields(type, store, model) {
+function typeFields(type, store, model, figures) {
   const p = store.state.genera.params[type];
   const set = (key) => (v) => (p[key] = v);
   switch (type) {
@@ -125,8 +125,23 @@ function typeFields(type, store, model) {
     case 'gormita': {
       const name = h('input', { type: 'text', value: p.name, maxlength: 60, autocomplete: 'off', spellcheck: 'false' });
       name.addEventListener('input', () => (p.name = name.value));
+      const nameField = h('label', { class: 'field' }, h('span', { class: 'label' }, 'Nome (la stessa parola dà la stessa forma)'), name);
+      const showName = () => (nameField.hidden = Boolean(p.figure));
+      showName();
+      // Simone's figures (public/assets/gormiti), then the placeholder generated from a name.
+      const options = [...figures.values()].map((f) => ({ value: f.id, label: f.name }));
+      const figure = selectField({
+        label: 'Figura',
+        options: [...options, { value: '', label: 'Segnaposto (dal nome)' }],
+        value: p.figure,
+        onChange: (v) => {
+          p.figure = v;
+          showName();
+        },
+      });
       return [
-        h('label', { class: 'field' }, h('span', { class: 'label' }, 'Nome (la stessa parola dà la stessa forma)'), name),
+        ...(options.length ? [figure.field] : []),
+        nameField,
         rangeField({ label: 'Larghezza', unit: 'mm', value: p.width, min: 20, max: 600, step: 1, onChange: set('width') }).field,
       ];
     }
@@ -152,10 +167,10 @@ function typeFields(type, store, model) {
   }
 }
 
-function generaSection({ store, model }) {
+function generaSection({ store, model, figures }) {
   const s = store.state;
   const groups = Object.fromEntries(
-    Object.keys(ELEMENT_TYPES).map((type) => [type, h('div', { class: 'stack' }, typeFields(type, store, model))]),
+    Object.keys(ELEMENT_TYPES).map((type) => [type, h('div', { class: 'stack' }, typeFields(type, store, model, figures))]),
   );
   const type = segmented({
     label: 'Tipo',
@@ -202,11 +217,11 @@ function generaSection({ store, model }) {
   );
 }
 
-export function createPanels({ root, store, model, tools }) {
+export function createPanels({ root, store, model, tools, figures = new Map() }) {
   const pad = createPad({ store, model, select: tools.select });
   root.append(
     h('div', { class: 'pad-block' }, pad.element),
     gravitySection({ store, model, tools }),
-    generaSection({ store, model }),
+    generaSection({ store, model, figures }),
   );
 }

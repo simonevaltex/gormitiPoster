@@ -1,5 +1,6 @@
 import { it, expect, beforeAll } from 'vitest';
-import { composeSheetSvg, poseTransform } from '../src/recipe.js';
+import { composeSheetSvg, poseTransform, lightenSvg } from '../src/recipe.js';
+import { parseFigureSvg } from '../src/svg-figure.js';
 import { exportPaint, screenPaint } from '../src/paint.js';
 import { defaultParams } from '../src/elements/index.js';
 import { loadFontsFromDisk } from './helpers.js';
@@ -52,4 +53,17 @@ it('thumbnails use the screen classes and their own clip id', () => {
 
 it('pose transform places the collision centre at the body position', () => {
   expect(poseTransform({ x: 10, y: 20, angle: Math.PI / 2 }, { x: 1, y: 2 })).toBe('translate(10 20) rotate(90) translate(-1 -2)');
+});
+
+it('figures reach the builders; thumbnails are lighter and keep the exact figure scale', () => {
+  const figure = parseFigureSvg('<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="50"/></svg>');
+  const figures = new Map([['blocco', { id: 'blocco', name: 'Blocco', ...figure }]]);
+  const r = recipe(3);
+  r.elements.push({ id: 'e3', type: 'gormita', params: { figure: 'blocco', name: '', width: 120.3 }, x: 148.5, y: 300, angle: 0 });
+  const { svg } = composeSheetSvg(r, { fonts, figures, paint });
+  const scale = svg.match(/scale\(([\d.]+)\)/)[1];
+  expect(scale).toBe(String((120.3 - 8) / 100));
+  const thumbnail = lightenSvg(composeSheetSvg(r, { fonts, figures, paint: screenPaint, detail: 'thumbnail' }).svg);
+  expect(thumbnail).toContain(`scale(${scale})`);
+  expect(thumbnail.replace(/scale\([^)]*\)/g, '')).not.toMatch(/\d\.\d\d/); // anything else: one decimal at most
 });

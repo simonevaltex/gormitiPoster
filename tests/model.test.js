@@ -2,7 +2,11 @@ import { it, expect, beforeAll } from 'vitest';
 import { createStore } from '../src/state.js';
 import { createPhysics } from '../src/physics.js';
 import { createModel } from '../src/model.js';
+import { parseFigureSvg } from '../src/svg-figure.js';
 import { loadFontsFromDisk } from './helpers.js';
+
+const BLOCK_SVG = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="50"/><rect fill="#fff" x="10" y="10" width="20" height="20"/></svg>';
+const figures = new Map([['blocco', { id: 'blocco', name: 'Blocco', file: 'gormiti/blocco.svg', ...parseFigureSvg(BLOCK_SVG) }]]);
 
 let fonts;
 beforeAll(async () => {
@@ -12,7 +16,7 @@ beforeAll(async () => {
 function setup() {
   const store = createStore();
   const physics = createPhysics();
-  const model = createModel({ store, physics, fonts });
+  const model = createModel({ store, physics, fonts, figures });
   model.reset();
   return { s: store.state, store, physics, model };
 }
@@ -154,6 +158,29 @@ it('recipe round-trip reopens identical poses', () => {
   expect(poses(other.physics)).toEqual(poses(physics));
   expect(other.s.poster).toEqual({ id: 'p1', number: 1 });
   expect(other.physics.isSettled()).toBe(true);
+});
+
+it('a Gormita from an SVG falls, rests upright on the segment and reopens identical', () => {
+  const { s, physics, model } = setup();
+  s.genera.type = 'gormita';
+  s.genera.params.gormita = { figure: 'blocco', name: '', width: 120 };
+  expect(model.generate().ok).toBe(true);
+  physics.settle(2000);
+  const el = s.elements[0];
+  expect(el.built.markup).toContain('scale(');
+  const recipe = model.toRecipe({ id: 'p1', number: 1, date: '2026-10-15T00:00:00.000Z' });
+  const pose = recipe.elements[0];
+  expect(pose.params.figure).toBe('blocco');
+  expect(Math.abs(pose.angle)).toBeLessThan(0.01);
+  // The lowest point of its outline (rings included) sits on the segment top, at 404 mm.
+  const lowest = Math.max(
+    ...el.built.collisionPolygon.map((p) => pose.y + (p.x - el.built.centre.x) * Math.sin(pose.angle) + (p.y - el.built.centre.y) * Math.cos(pose.angle)),
+  );
+  expect(lowest).toBeCloseTo(404, 0);
+  const other = setup();
+  other.model.loadRecipe(structuredClone(recipe));
+  expect(poses(other.physics)).toEqual(poses(physics));
+  expect(other.s.elements[0].built.markup).toEqual(el.built.markup);
 });
 
 it('the Numero badge follows the poster number', () => {

@@ -6,6 +6,11 @@ import { fmt } from './svg.js';
 
 export const RECIPE_VERSION = 1;
 
+// Thumbnails stay light: one decimal (a tenth of a mm) is plenty at that size. A figure's scale
+// is left exact, or the whole drawing would shrink or grow.
+export const lightenSvg = (svg) =>
+  svg.replace(/scale\([^)]*\)|-?\d+\.\d+/g, (m) => (m.startsWith('scale') ? m : String(+(+m).toFixed(1))));
+
 // Matter keeps body.position at the centroid of the collision polygon.
 export const poseTransform = (pose, centre) =>
   `translate(${fmt(pose.x)} ${fmt(pose.y)}) rotate(${fmt((pose.angle * 180) / Math.PI)}) ` +
@@ -29,14 +34,14 @@ function cropMarks(bleed, slug, paint) {
 
 export function composeSheetSvg(
   recipe,
-  { fonts, paint, cropMarks: withMarks = false, slug = EXPORT.slug, idPrefix = 'sheet', posterNumber = recipe.number },
+  { fonts, figures, paint, cropMarks: withMarks = false, slug = EXPORT.slug, idPrefix = 'sheet', posterNumber = recipe.number, detail },
 ) {
   const bleed = recipe.bleed;
   const s = withMarks ? slug : 0;
   const width = A3.width + 2 * (bleed + s);
   const height = A3.height + 2 * (bleed + s);
   const origin = -(bleed + s);
-  const ctx = { fonts, paint, posterNumber };
+  const ctx = { fonts, figures, paint, posterNumber, detail };
   const elements = recipe.elements
     .map((el) => {
       const built = buildElement(el.type, el.params, ctx);

@@ -4,7 +4,12 @@ import { gormitaShape } from '../src/elements/gormita.js';
 import { POPOLI } from '../src/popoli.js';
 import { screenPaint, exportPaint } from '../src/paint.js';
 import { convexHull, pointInPolygon } from '../src/geometry.js';
+import { parseFigureSvg } from '../src/svg-figure.js';
 import { loadFontsFromDisk } from './helpers.js';
+
+const BLOCK_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100" height="50"/><rect fill="#fff" x="10" y="10" width="20" height="20"/></svg>';
+const figures = new Map([['blocco', { id: 'blocco', name: 'Blocco', file: 'gormiti/blocco.svg', ...parseFigureSvg(BLOCK_SVG) }]]);
 
 let fonts;
 beforeAll(async () => {
@@ -96,5 +101,20 @@ it('export paint uses exact hex and no classes', () => {
 it('validation', () => {
   expect(validateParams('testo', { ...defaultParams().testo, text: '  ' })).toBe('empty-text');
   expect(validateParams('gormita', { ...defaultParams().gormita, name: '' })).toBe('empty-name');
+  expect(validateParams('gormita', { figure: 'blocco', name: '', width: 180 })).toBeNull(); // a figure needs no name
   expect(validateParams('testo', defaultParams().testo)).toBeNull();
+});
+
+it('gormita: a chosen figure comes from its SVG, otherwise the placeholder is drawn', () => {
+  const c = { ...ctx(), figures };
+  const fromSvg = buildElement('gormita', { figure: 'blocco', name: 'Gormita', width: 180 }, c);
+  expect(fromSvg.markup).toContain('scale(');
+  expect(fromSvg.bounds.width).toBeCloseTo(180, 6);
+  expect(pointInPolygon(fromSvg.centre, fromSvg.collisionPolygon)).toBe(true);
+  const placeholder = buildElement('gormita', { figure: '', name: 'Gormita', width: 180 }, c);
+  expect(placeholder.markup).not.toContain('scale(');
+  // A poster whose figure file is gone falls back to the placeholder; so do posters saved
+  // before figures existed (no `figure` at all).
+  expect(buildElement('gormita', { figure: 'sparito', name: 'Gormita', width: 180 }, c).markup).toEqual(placeholder.markup);
+  expect(buildElement('gormita', { name: 'Gormita', width: 180 }, ctx()).markup).toEqual(placeholder.markup);
 });

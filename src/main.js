@@ -1,5 +1,6 @@
 import './ui/style.css';
 import { loadFonts } from './fonts.js';
+import { loadFigures } from './figures.js';
 import { createStore } from './state.js';
 import { createPhysics } from './physics.js';
 import { createModel } from './model.js';
@@ -13,18 +14,29 @@ import { showStatus } from './ui/status.js';
 import { isTyping } from './ui/dom.js';
 import { STEP_MS } from './constants.js';
 
-const fonts = await loadFonts((file) =>
-  fetch(`${import.meta.env.BASE_URL}fonts/${file}`).then((r) => {
-    if (!r.ok) throw new Error(`Font mancante: ${file}`);
-    return r.arrayBuffer();
-  }),
-);
+const [fonts, figures] = await Promise.all([
+  loadFonts((file) =>
+    fetch(`${import.meta.env.BASE_URL}fonts/${file}`).then((r) => {
+      if (!r.ok) throw new Error(`Font mancante: ${file}`);
+      return r.arrayBuffer();
+    }),
+  ),
+  // Simone's figures, listed in assets/manifest.json (see scripts/assets-manifest.mjs).
+  loadFigures((path) =>
+    fetch(`${import.meta.env.BASE_URL}assets/${path.split('/').map(encodeURIComponent).join('/')}`).then((r) => {
+      if (!r.ok) throw new Error(`${r.status}`);
+      return r.text();
+    }),
+  ),
+]);
 
 const store = createStore();
 const s = store.state;
 s.colors = loadStoredColors(s.colors);
+// Genera starts on the first of Simone's figures, when there is one.
+if (figures.size) s.genera.params.gormita.figure = figures.keys().next().value;
 const physics = createPhysics();
-const model = createModel({ store, physics, fonts });
+const model = createModel({ store, physics, fonts, figures });
 
 const zoomLabel = document.getElementById('zoom');
 const view = createSheetView(document.getElementById('sheet'), store, {
@@ -32,10 +44,10 @@ const view = createSheetView(document.getElementById('sheet'), store, {
 });
 document.getElementById('fit').addEventListener('click', () => view.fit());
 const tools = bindSheetTools(view, store, model);
-createPanels({ root: document.getElementById('panel'), store, model, tools });
+createPanels({ root: document.getElementById('panel'), store, model, tools, figures });
 createSheetInfo({ root: document.getElementById('sheet-info'), store, model });
 
-const exportDialog = createExportDialog({ root: document.getElementById('export-modal'), fonts });
+const exportDialog = createExportDialog({ root: document.getElementById('export-modal'), fonts, figures });
 // The current sheet exports with the number it has (or will get) in the archive.
 const currentRecipe = () =>
   model.toRecipe({ id: s.poster.id ?? 'foglio', number: model.displayNumber(), date: new Date().toISOString() });
@@ -44,6 +56,7 @@ const archive = createArchive({
   store,
   model,
   fonts,
+  figures,
   root: document.getElementById('archive'),
   tabs: { crea: document.getElementById('tab-crea'), archive: document.getElementById('open-archive') },
   onExport: (recipe) => recipe && exportDialog.show(recipe),
@@ -103,4 +116,4 @@ requestAnimationFrame(frame);
 
 document.getElementById('loading').remove();
 
-if (import.meta.env.DEV) window.__gormiti = { store, physics, model, view, ready: true };
+if (import.meta.env.DEV) window.__gormiti = { store, physics, model, view, figures, ready: true };
