@@ -134,39 +134,6 @@ function typeFields(type, store, model) {
     case 'testo': {
       const text = h('textarea', { rows: 3, value: p.text, autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Testo' });
       text.addEventListener('input', () => (p.text = text.value));
-      const fill = segmented({
-        label: 'Riempimento',
-        options: [
-          { value: 'paper', label: 'Carta' },
-          { value: 'ink', label: 'Inchiostro' },
-        ],
-        value: p.fill,
-        onChange: set('fill'),
-      });
-      const stroke = segmented({
-        label: 'Contorno',
-        options: [
-          { value: 'none', label: 'Nessuno' },
-          { value: 'paper', label: 'Carta' },
-          { value: 'ink', label: 'Inchiostro' },
-        ],
-        value: p.stroke,
-        onChange: set('stroke'),
-      });
-      const preset = (label, fillValue, strokeValue) =>
-        h(
-          'button',
-          {
-            type: 'button',
-            onclick: () => {
-              p.fill = fillValue;
-              p.stroke = strokeValue;
-              fill.set(fillValue);
-              stroke.set(strokeValue);
-            },
-          },
-          label,
-        );
       return [
         h('label', { class: 'field' }, h('span', { class: 'label' }, 'Testo (Invio = nuova riga)'), text),
         segmented({
@@ -180,11 +147,15 @@ function typeFields(type, store, model) {
           onChange: set('weight'),
         }).field,
         numberField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
-        checkboxField({ label: 'Maiuscolo', checked: p.uppercase, onChange: set('uppercase') }).field,
-        h('div', { class: 'field' }, h('span', { class: 'label' }, 'Stile rapido'), h('div', { class: 'row' }, preset('Pieno', 'ink', 'paper'), preset('Contorno', 'paper', 'ink'))),
-        fill.field,
-        stroke.field,
-        numberField({ label: 'Spessore contorno', unit: 'mm', value: p.strokeWidth, min: 0.1, max: 10, step: 0.1, onChange: set('strokeWidth') }).field,
+        segmented({
+          label: 'Stile',
+          options: [
+            { value: 'ink', label: 'Inchiostro' },
+            { value: 'outline', label: 'Contorno' },
+          ],
+          value: p.style,
+          onChange: set('style'),
+        }).field,
       ];
     }
     case 'numero': {
@@ -199,7 +170,7 @@ function typeFields(type, store, model) {
   }
 }
 
-function generaSection({ store, model, pad }) {
+function generaSection({ store, model }) {
   const s = store.state;
   const groups = Object.fromEntries(
     ['popolo', 'stemma', 'gormita', 'testo', 'numero'].map((type) => [type, h('div', { class: 'stack' }, typeFields(type, store, model))]),
@@ -249,7 +220,6 @@ function generaSection({ store, model, pad }) {
     'Genera',
     type.field,
     ...Object.values(groups),
-    h('div', { class: 'field' }, h('span', { class: 'label' }, 'Partenza'), pad.fields),
     h('div', { class: 'row' }, generate, clear.element),
     h('p', { class: 'hint' }, 'Cmd/Ctrl+Z toglie l’ultimo blocco'),
     message,
@@ -261,6 +231,6 @@ export function createPanels({ root, store, model, tools }) {
   root.append(
     h('div', { class: 'pad-block' }, pad.element),
     gravitySection({ store, model, tools }),
-    generaSection({ store, model, pad }),
+    generaSection({ store, model }),
   );
 }

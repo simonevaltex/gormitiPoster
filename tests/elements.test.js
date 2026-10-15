@@ -54,16 +54,23 @@ it('default sizes: stemma Ø20, numero Ø22, gormita 180 wide', () => {
   expect(buildElement('gormita', p.gormita, ctx()).bounds.width).toBeCloseTo(180, 0);
 });
 
-it('testo: collision box is the glyph box grown by the stroke', () => {
-  const base = { ...defaultParams().testo, text: 'Sommo', stroke: 'none' };
-  const plain = buildElement('testo', base, ctx()).bounds;
-  const stroked = buildElement('testo', { ...base, stroke: 'paper', strokeWidth: 2 }, ctx()).bounds;
-  expect(stroked.width).toBeCloseTo(plain.width + 4, 5);
-  expect(stroked.height).toBeCloseTo(plain.height + 4, 5);
+it('testo: the outline style grows the glyph box by the 0.5 mm stroke', () => {
+  const base = { ...defaultParams().testo, text: 'Sommo' };
+  const plain = buildElement('testo', { ...base, style: 'ink' }, ctx()).bounds;
+  const outlined = buildElement('testo', { ...base, style: 'outline' }, ctx()).bounds;
+  expect(outlined.width).toBeCloseTo(plain.width + 1, 5);
+  expect(outlined.height).toBeCloseTo(plain.height + 1, 5);
+});
+
+it('testo: old recipes with a paper fill open as outline', () => {
+  const base = { ...defaultParams().testo, text: 'Sommo' };
+  delete base.style;
+  const old = buildElement('testo', { ...base, fill: 'paper', stroke: 'ink', strokeWidth: 0.8 }, ctx());
+  expect(old.markup).toEqual(buildElement('testo', { ...base, style: 'outline' }, ctx()).markup);
 });
 
 it('testo: cap height drives the size', () => {
-  const p = { ...defaultParams().testo, text: 'H', stroke: 'none' };
+  const p = { ...defaultParams().testo, text: 'H', style: 'ink' };
   expect(buildElement('testo', { ...p, capHeight: 40 }, ctx()).bounds.height).toBeCloseTo(40, 1);
 });
 

@@ -6,7 +6,6 @@ import { A3 } from './constants.js';
 import { fieldAt } from './field.js';
 import { hitTest, dragPatch } from './attractors.js';
 import { fmt } from './svg.js';
-import { h, numberField } from './ui/dom.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const BAND = 0.2;
@@ -26,18 +25,6 @@ export function createPad({ store, model, select }) {
     const H = A3.height + 2 * b;
     return { b, W, H, x0: -b - BAND * W, y0: -b - BAND * H, w: W * (1 + 2 * BAND), h: H * (1 + 2 * BAND) };
   };
-
-  const x = numberField({ label: 'X', unit: 'mm', value: s.spawn.x, step: 0.5, onChange: (v) => setSpawn({ x: v }) });
-  const y = numberField({ label: 'Y', unit: 'mm', value: s.spawn.y, step: 0.5, onChange: (v) => setSpawn({ y: v }) });
-  const tilt = numberField({
-    label: 'Inclinazione iniziale',
-    unit: 'gradi',
-    value: s.spawn.tilt,
-    min: -180,
-    max: 180,
-    step: 1,
-    onChange: (v) => (s.spawn.tilt = v),
-  });
 
   function setSpawn(patch) {
     const r = bounds();
@@ -86,9 +73,6 @@ export function createPad({ store, model, select }) {
     }
     html += `<circle class="guide filled pad-handle" cx="${fmt(s.spawn.x)}" cy="${fmt(s.spawn.y)}" r="${fmt(3.5 * k)}"/>`;
     svg.innerHTML = html;
-    x.set(+s.spawn.x.toFixed(1));
-    y.set(+s.spawn.y.toFixed(1));
-    tilt.set(s.spawn.tilt);
   }
   const mmPerPx = () => bounds().w / (svg.clientWidth || 300);
 
@@ -128,6 +112,5 @@ export function createPad({ store, model, select }) {
   store.subscribe((t) => ['spawn', 'attractors', 'selection', 'bleed', 'load'].includes(t) && render());
   new ResizeObserver(() => render()).observe(svg);
 
-  const fields = h('div', { class: 'stack' }, h('div', { class: 'grid2' }, x.field, y.field), tilt.field);
-  return { element: svg, fields, render };
+  return { element: svg, render };
 }

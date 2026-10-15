@@ -94,9 +94,13 @@ const toScreen = (x, y) =>
   }, [x, y]);
 const button = (name) => page.getByRole('button', { name, exact: true });
 const generate = () => button('Genera').click();
+// The start point is picked on the pad (its coordinates are rounded to 0.1 mm there).
 const setSpawn = async (x, y) => {
-  await page.getByLabel('X (mm)').fill(String(x));
-  await page.getByLabel('Y (mm)').fill(String(y));
+  const p = await page.evaluate(([x, y]) => {
+    const m = document.querySelector('svg.pad').getScreenCTM();
+    return { x: m.a * x + m.e, y: m.d * y + m.f };
+  }, [x, y]);
+  await page.mouse.click(p.x, p.y);
 };
 const clearSheet = async () => {
   await button('Svuota foglio').click();
