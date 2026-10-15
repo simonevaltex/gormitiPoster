@@ -55,7 +55,9 @@ export function createPhysics() {
       const touching = body.plugin.touching;
       const deadband = touching ? PHYS.contactAngleDeadband : PHYS.angleDeadband;
       // In contact the push only lasts a while: a block wedged at an angle must be let go to rest.
-      const contactScale = body.plugin.touchSteps < PHYS.contactPdSteps ? PHYS.contactPdScale : 0;
+      // Never on a point: turning a block that sits on the tiny point collider walks it sideways
+      // (the contact normal swings from edge to edge), and the radial field holds it anyway.
+      const contactScale = body.plugin.touchSteps < PHYS.contactPdSteps && !body.plugin.onPoint ? PHYS.contactPdScale : 0;
       const push = Math.abs(err) < deadband ? 0 : PHYS.kp * err * (touching ? contactScale : 1);
       if (push === 0 && Math.abs(w) < PHYS.spinDeadband) continue;
       const alpha = clamp(push - PHYS.kd * w, -PHYS.maxAngAccel, PHYS.maxAngAccel);
@@ -85,7 +87,13 @@ export function createPhysics() {
   function makeCollider(att) {
     // Matter combines min friction and max restitution per pair: colliders never add bounce.
     const opts = { isStatic: true, friction: settings.friction, frictionStatic: PHYS.frictionStatic, restitution: 0 };
-    if (att.type === 'point') return Bodies.circle(att.x, att.y, PHYS.pointRadius, opts, 16);
+    // Points are frictionless. Matter's friction cancels slow sliding outright (not Coulomb), so
+    // any friction would glue a block to a weak point; the radial field needs none to hold it.
+    if (att.type === 'point') {
+      const point = Bodies.circle(att.x, att.y, PHYS.pointRadius, { ...opts, friction: 0, frictionStatic: 0 }, 16);
+      point.plugin.isPoint = true;
+      return point;
+    }
     const dx = att.x2 - att.x1;
     const dy = att.y2 - att.y1;
     const length = Math.max(Math.hypot(dx, dy), PHYS.segmentThickness);
@@ -123,11 +131,15 @@ export function createPhysics() {
   function substep() {
     Engine.update(engine, STEP_MS / PHYS.substeps);
     const touching = new Set();
+    const onPoint = new Set();
     for (const pair of engine.pairs.list) {
-      if (pair.isActive && !pair.isSensor) {
-        touching.add(pair.bodyA.parent);
-        touching.add(pair.bodyB.parent);
-      }
+      if (!pair.isActive || pair.isSensor) continue;
+      const a = pair.bodyA.parent;
+      const b = pair.bodyB.parent;
+      touching.add(a);
+      touching.add(b);
+      if (a.plugin.isPoint) onPoint.add(b);
+      if (b.plugin.isPoint) onPoint.add(a);
     }
     // Matter's sleep test is tuned for pixels and ignores slow rotation (rad/step counts like
     // mm/step), so blocks would freeze half-turned or nap in mid-air in a weak field. Here a
@@ -139,6 +151,7 @@ export function createPhysics() {
         continue;
       }
       body.plugin.touching = touching.has(body);
+      body.plugin.onPoint = onPoint.has(body);
       body.plugin.touchSteps = body.plugin.touching ? body.plugin.touchSteps + 1 / PHYS.substeps : 0;
       const v = Body.getVelocity(body);
       const tip = Body.getAngularVelocity(body) * body.plugin.radius;
@@ -197,7 +210,7 @@ export function createPhysics() {
         target.friction = settings.friction;
         target.restitution = settings.restitution;
       }
-      for (const body of colliders) body.friction = settings.friction;
+      for (const body of colliders) if (body.friction > 0) body.friction = settings.friction; // segments only
       if (solidChanged) {
         resetColliders();
         wakeAll();

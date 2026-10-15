@@ -134,3 +134,15 @@ it('rebuild puts every element back asleep at its exact pose', () => {
   expect(p.isSettled()).toBe(true);
   expect(p.poses().get('a')).toEqual({ x: 100.123456789, y: 383.987654321, angle: 0.0123 });
 });
+
+it('a block resting on a weak point leaves it when another point becomes stronger', () => {
+  const L = { id: 'L', type: 'point', x: 60, y: 360, strength: 90 };
+  const R = { id: 'R', type: 'point', x: 230, y: 210, strength: 15 };
+  const p = world([L, R]);
+  p.addElement({ id: 'b', polygon: regularPolygon(10, 32), x: 62.5, y: 335, angle: 0 });
+  p.settle(1500);
+  p.setAttractors([{ ...L, strength: 1 }, { ...R, strength: 100 }]);
+  p.settle(3000);
+  const pose = p.poses().get('b');
+  expect(Math.hypot(pose.x - R.x, pose.y - R.y)).toBeLessThan(25);
+});
