@@ -18,7 +18,7 @@ export const DEFAULT_SEGMENT = { type: 'segment', x1: 15, y1: 405, x2: 282, y2: 
 
 // a = Σ strength·k / (d² + eps²) in mm/ms². k is calibrated so that a 40 mm block 200 mm from a
 // strength-50 point reaches it in about one second (see scripts/calibrate-field.mjs).
-export const FIELD = { eps: 20, k: 0.2, maxAccel: 0.002 };
+export const FIELD = { eps: 20, k: 0.2565, maxAccel: 0.002 };
 
 export const PHYS = {
   segmentThickness: 2,
@@ -26,6 +26,7 @@ export const PHYS = {
   frictionStatic: 1,
   frictionAir: 0.01,
   sleepThreshold: 60,
+  substeps: 4,
   positionIterations: 10,
   velocityIterations: 10,
   // PD orientation control, per step: Δω = kp·error − kd·ω, clamped to maxAngAccel.
@@ -34,13 +35,19 @@ export const PHYS = {
   maxAngAccel: 0.01,
   angleDeadband: 0.003,
   spinDeadband: 0.002,
-  // Speed caps (mm/step and rad/step) so that blocks never tunnel through each other.
+  // While touching something: a wider deadband, and the push only lasts a while (in steps).
+  contactPdScale: 1,
+  contactAngleDeadband: 0.09,
+  contactPdSteps: 180,
+  // Speed caps (mm/step and rad/step) so that blocks never tunnel through each other. With 4
+  // substeps, 6 mm/step means at most 1.5 mm per Matter update, under the 2 mm colliders.
   vmaxFactor: 0.4,
   vmaxMin: 1.5,
-  vmaxMax: 8,
+  vmaxMax: 6,
   wmaxMax: 0.1,
-  // A block without contacts may not fall asleep while moving faster than this (speed²).
+  // A body stays awake while speed² + (ω·radius)² (mm²/step²) is above these limits.
   freeMotionSleep: 1e-4,
+  contactMotionSleep: 0.0025,
   settleMaxSteps: 1200,
   spawnStep: 2,
   spawnMaxTries: 1000,
