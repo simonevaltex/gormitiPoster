@@ -25,7 +25,8 @@ export const isTyping = (e) => {
 };
 
 // Number input with label and unit. onChange gets a clamped number (ignored while invalid).
-export function numberField({ label, unit, value, min, max, step = 1, onChange }) {
+// With `stepper`, two small arrow buttons step the value up and down.
+export function numberField({ label, unit, value, min, max, step = 1, stepper = false, onChange }) {
   const input = h('input', { type: 'number', value: String(value), min, max, step, inputmode: 'decimal' });
   input.addEventListener('input', () => {
     const v = parseFloat(input.value);
@@ -35,7 +36,23 @@ export function numberField({ label, unit, value, min, max, step = 1, onChange }
     const v = parseFloat(input.value);
     input.value = String(Number.isFinite(v) ? clamp(v, min ?? -Infinity, max ?? Infinity) : value);
   });
-  const field = h('label', { class: 'field' }, h('span', { class: 'label' }, label, unit ? ` (${unit})` : ''), input);
+  const stepButton = (dir, name) =>
+    h('button', {
+      type: 'button',
+      class: `step step-${dir}`,
+      tabindex: '-1',
+      'aria-label': name,
+      onclick: () => {
+        if (dir === 'up') input.stepUp();
+        else input.stepDown();
+        input.dispatchEvent(new Event('input'));
+        input.dispatchEvent(new Event('change'));
+      },
+    });
+  const control = stepper
+    ? h('span', { class: 'stepper' }, input, h('span', { class: 'step-buttons' }, stepButton('up', `${label} +`), stepButton('down', `${label} −`)))
+    : input;
+  const field = h('label', { class: 'field' }, h('span', { class: 'label' }, label, unit ? ` (${unit})` : ''), control);
   return { field, input, set: (v) => document.activeElement !== input && (input.value = String(v)) };
 }
 

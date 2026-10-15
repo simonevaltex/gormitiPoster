@@ -1,4 +1,4 @@
-// Header: the two colour pickers (remembered in localStorage) and the main actions.
+// The two colour pickers (remembered in localStorage) and the save / export actions.
 const STORAGE_KEY = 'gormiti.colors';
 const KEYS = ['carta', 'inchiostro'];
 const isHex = (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
@@ -15,7 +15,7 @@ export function loadStoredColors(fallback) {
   return fallback;
 }
 
-export function createHeader({ store, onSave, onToggleArchive, onExport }) {
+export function createHeader({ store, onSave, onExport }) {
   const s = store.state;
   const inputs = Object.fromEntries(KEYS.map((k) => [k, document.getElementById(k)]));
   const outputs = Object.fromEntries(KEYS.map((k) => [k, document.getElementById(`${k}-hex`)]));
@@ -55,7 +55,6 @@ export function createHeader({ store, onSave, onToggleArchive, onExport }) {
   }
 
   document.getElementById('save').addEventListener('click', onSave);
-  document.getElementById('open-archive').addEventListener('click', onToggleArchive);
   document.getElementById('open-export').addEventListener('click', onExport);
 
   store.subscribe((topic) => {

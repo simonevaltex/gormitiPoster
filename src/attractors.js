@@ -1,11 +1,10 @@
 // Attractors: factories, hit testing, their guides and the sheet tools. Guides are thin dashed
 // lines sized in screen pixels (mmPerPx converts), and never appear in exports or thumbnails.
-import { DEFAULTS } from './constants.js';
+import { A3, DEFAULTS } from './constants.js';
 import { fmt } from './svg.js';
 import { isTyping } from './ui/dom.js';
 
 const HIT_PX = 9;
-const MIN_SEGMENT_MM = 5;
 
 export const newPoint = (x, y) => ({ type: 'point', x, y, strength: DEFAULTS.strength });
 export const newSegment = (x1, y1, x2, y2) => ({ type: 'segment', x1, y1, x2, y2, strength: DEFAULTS.strength });
@@ -64,21 +63,43 @@ export function attractorGuide(a, selected, mmPerPx) {
   );
 }
 
-// Pointer tools on the sheet. Select/move is the default; "+ Punto" places a point with a click,
-// "+ Segmento" draws one by dragging; both return to select with the new attractor selected.
-// Every move goes through the model, which wakes the blocks: attractors are live.
+// Where a drag of `part` by (dx, dy) moves an attractor that started as `orig`.
+export function dragPatch(part, o, dx, dy) {
+  if (part === 'p') return { x: o.x + dx, y: o.y + dy };
+  if (part === 'a') return { x1: o.x1 + dx, y1: o.y1 + dy };
+  if (part === 'b') return { x2: o.x2 + dx, y2: o.y2 + dy };
+  return { x1: o.x1 + dx, y1: o.y1 + dy, x2: o.x2 + dx, y2: o.y2 + dy };
+}
+
+// "Punto" and "Linea" drop a new attractor somewhere inside the trimmed sheet. This is UI, not
+// physics, so Math.random() is fine: the field itself stays deterministic.
+const INSET_MM = 30;
+const randomIn = (lo, hi) => lo + Math.random() * (hi - lo);
+const randomSpot = () => ({ x: randomIn(INSET_MM, A3.width - INSET_MM), y: randomIn(INSET_MM, A3.height - INSET_MM) });
+const round1 = (v) => Math.round(v * 10) / 10;
+
+export const randomPoint = () => {
+  const p = randomSpot();
+  return newPoint(round1(p.x), round1(p.y));
+};
+
+export function randomSegment() {
+  let a;
+  let b;
+  do {
+    a = randomSpot();
+    b = randomSpot();
+  } while (Math.hypot(b.x - a.x, b.y - a.y) < 80);
+  return newSegment(round1(a.x), round1(a.y), round1(b.x), round1(b.y));
+}
+
+// Pointer on the sheet: click selects an attractor, dragging moves it (a segment's endpoints
+// stretch or rotate it). Every move goes through the model, which wakes the blocks: attractors are live.
 export function bindSheetTools(view, store, model) {
   const s = store.state;
   const svg = view.svg;
   let drag = null;
   const tolerance = () => HIT_PX / view.pxPerMm();
-
-  function setTool(tool) {
-    s.tool = tool;
-    svg.classList.toggle('tool-point', tool === 'point');
-    svg.classList.toggle('tool-segment', tool === 'segment');
-    store.emit('tool');
-  }
 
   function select(id) {
     if (s.selectedId === id) return;
@@ -86,58 +107,30 @@ export function bindSheetTools(view, store, model) {
     store.emit('selection');
   }
 
+  function add(attractor) {
+    select(model.addAttractor(attractor).id);
+  }
+
   svg.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     const p = view.toWorld(e.clientX, e.clientY);
-    if (s.tool === 'point') {
-      select(model.addAttractor(newPoint(p.x, p.y)).id);
-      setTool('select');
-      return;
-    }
-    svg.setPointerCapture(e.pointerId);
-    if (s.tool === 'segment') {
-      drag = { creating: true, a: p, b: p };
-      return;
-    }
     const hit = hitTest(s.attractors, p, tolerance(), s.selectedId);
     select(hit?.id ?? null);
-    if (hit) drag = { ...hit, start: p, orig: { ...s.attractors.find((a) => a.id === hit.id) } };
+    if (!hit) return;
+    svg.setPointerCapture(e.pointerId);
+    drag = { ...hit, start: p, orig: { ...s.attractors.find((a) => a.id === hit.id) } };
   });
 
   svg.addEventListener('pointermove', (e) => {
     const p = view.toWorld(e.clientX, e.clientY);
     if (!drag) {
-      if (s.tool === 'select') svg.classList.toggle('over-attractor', !!hitTest(s.attractors, p, tolerance(), s.selectedId));
+      svg.classList.toggle('over-attractor', !!hitTest(s.attractors, p, tolerance(), s.selectedId));
       return;
     }
-    if (drag.creating) {
-      drag.b = p;
-      view.renderPreview(drag.a, drag.b);
-      return;
-    }
-    const dx = p.x - drag.start.x;
-    const dy = p.y - drag.start.y;
-    const o = drag.orig;
-    const patch =
-      drag.part === 'p'
-        ? { x: o.x + dx, y: o.y + dy }
-        : drag.part === 'a'
-          ? { x1: o.x1 + dx, y1: o.y1 + dy }
-          : drag.part === 'b'
-            ? { x2: o.x2 + dx, y2: o.y2 + dy }
-            : { x1: o.x1 + dx, y1: o.y1 + dy, x2: o.x2 + dx, y2: o.y2 + dy };
-    model.updateAttractor(drag.id, patch);
+    model.updateAttractor(drag.id, dragPatch(drag.part, drag.orig, p.x - drag.start.x, p.y - drag.start.y));
   });
 
-  const end = () => {
-    if (drag?.creating) {
-      view.renderPreview(null);
-      const { a, b } = drag;
-      if (Math.hypot(b.x - a.x, b.y - a.y) >= MIN_SEGMENT_MM) select(model.addAttractor(newSegment(a.x, a.y, b.x, b.y)).id);
-      setTool('select');
-    }
-    drag = null;
-  };
+  const end = () => (drag = null);
   svg.addEventListener('pointerup', end);
   svg.addEventListener('pointercancel', end);
 
@@ -148,10 +141,9 @@ export function bindSheetTools(view, store, model) {
       model.removeAttractor(s.selectedId);
       store.emit('selection');
     } else if (e.key === 'Escape') {
-      if (s.tool !== 'select') setTool('select');
-      else select(null);
+      select(null);
     }
   });
 
-  return { setTool, select };
+  return { select, add };
 }

@@ -1,7 +1,9 @@
-// Left column: Foglio, Gravità, Genera, Impostazioni.
+// Left column: the start pad (with the attractors), then the Gravità and Genera sections, which
+// open and close. The sheet readout with the bleed sits over the stage, bottom left.
 import { A3 } from '../constants.js';
 import { POPOLI } from '../popoli.js';
 import { createPad } from '../pad.js';
+import { randomPoint, randomSegment } from '../attractors.js';
 import { h, numberField, rangeField, segmented, selectField, checkboxField } from './dom.js';
 import { confirmButton } from './inline-confirm.js';
 
@@ -15,34 +17,44 @@ export const MESSAGES = {
   'empty-name': 'Scrivi il nome del Gormita',
 };
 
-export const section = (title, ...children) =>
-  h('section', { class: 'section' }, h('h2', { class: 'section-title label' }, title), ...children);
+let sectionSeq = 0;
 
-function sheetSection({ store, model }) {
+// A section whose title is a button that opens and closes its body.
+export function section(title, ...children) {
+  const bodyId = `section-body-${++sectionSeq}`;
+  const body = h('div', { class: 'section-body', id: bodyId }, ...children);
+  const toggle = h(
+    'button',
+    { type: 'button', class: 'section-toggle', 'aria-expanded': 'true', 'aria-controls': bodyId, 'aria-label': `Sezione ${title}` },
+    h('span', { class: 'section-title' }, title),
+    h('span', { class: 'chevron', 'aria-hidden': 'true' }),
+  );
+  toggle.addEventListener('click', () => {
+    const open = toggle.getAttribute('aria-expanded') !== 'true';
+    toggle.setAttribute('aria-expanded', String(open));
+    body.hidden = !open;
+  });
+  return h('section', { class: 'section' }, h('h2', { class: 'section-head' }, toggle), body);
+}
+
+// Bottom left of the stage: fixed A3 format, bleed, working sheet size.
+export function createSheetInfo({ root, store, model }) {
   const s = store.state;
   const size = h('p', { class: 'readout' });
-  const bleed = numberField({ label: 'Bleed', unit: 'mm', value: s.bleed, min: 0, max: 20, step: 0.5, onChange: (v) => model.setBleed(v) });
+  const bleed = numberField({ label: 'Bleed', unit: 'mm', value: s.bleed, min: 0, max: 20, step: 0.5, stepper: true, onChange: (v) => model.setBleed(v) });
   const refresh = () => {
     bleed.set(s.bleed);
-    size.textContent = `Foglio di lavoro ${mm(A3.width + 2 * s.bleed)} × ${mm(A3.height + 2 * s.bleed)} mm`;
+    size.textContent = `Foglio di lavoro ${mm(A3.width + 2 * s.bleed).replace('.', ',')} × ${mm(A3.height + 2 * s.bleed).replace('.', ',')} mm`;
   };
   store.subscribe((t) => (t === 'bleed' || t === 'load') && refresh());
   refresh();
-  return section('Foglio', h('p', { class: 'readout' }, `Formato A3 · ${A3.width} × ${A3.height} mm`), bleed.field, size);
+  root.append(h('p', { class: 'readout' }, `Formato A3 · ${A3.width} × ${A3.height} mm`), bleed.field, size);
 }
 
 function gravitySection({ store, model, tools }) {
   const s = store.state;
-  const tool = segmented({
-    label: 'Strumento',
-    options: [
-      { value: 'select', label: 'Seleziona' },
-      { value: 'point', label: '+ Punto' },
-      { value: 'segment', label: '+ Segmento' },
-    ],
-    value: s.tool,
-    onChange: (v) => tools.setTool(v),
-  });
+  const addPoint = h('button', { type: 'button', onclick: () => tools.add(randomPoint()) }, 'Punto');
+  const addLine = h('button', { type: 'button', onclick: () => tools.add(randomSegment()) }, 'Linea');
   const readout = h('p', { class: 'readout' });
   const strength = rangeField({
     label: 'Forza',
@@ -63,15 +75,18 @@ function gravitySection({ store, model, tools }) {
     },
     'Elimina',
   );
-  const selected = h('div', { class: 'stack' }, readout, strength.field, h('div', { class: 'row' }, remove, h('span', { class: 'hint' }, 'oppure tasto Canc')));
-  const hint = h(
-    'p',
-    { class: 'hint' },
-    'Clicca un attrattore per selezionarlo, trascinalo per spostarlo. Le estremità di un segmento lo allungano o lo ruotano.',
-  );
+  const selected = h('div', { class: 'stack selected' }, readout, strength.field, h('div', { class: 'row' }, remove, h('span', { class: 'hint' }, 'oppure tasto Canc')));
+  const hint = h('p', { class: 'hint' }, 'Clicca un attrattore (qui sopra o sul foglio) per selezionarlo, trascinalo per spostarlo.');
+
+  const restitution = rangeField({ label: 'Rimbalzo', value: s.settings.restitution, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ restitution: v }) });
+  const friction = rangeField({ label: 'Attrito', value: s.settings.friction, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ friction: v }) });
+  const solid = checkboxField({
+    label: 'Attrattori solidi (punti e segmenti)',
+    checked: s.settings.solidAttractors,
+    onChange: (v) => model.setSettings({ solidAttractors: v }),
+  });
 
   function refresh() {
-    tool.set(s.tool);
     const a = s.attractors.find((x) => x.id === s.selectedId);
     selected.hidden = !a;
     hint.hidden = !!a;
@@ -79,12 +94,18 @@ function gravitySection({ store, model, tools }) {
     readout.textContent =
       a.type === 'point'
         ? `Punto · ${mm(a.x)}, ${mm(a.y)} mm`
-        : `Segmento · ${mm(a.x1)}, ${mm(a.y1)} → ${mm(a.x2)}, ${mm(a.y2)} mm · ${mm(Math.hypot(a.x2 - a.x1, a.y2 - a.y1))} mm`;
+        : `Linea · ${mm(a.x1)}, ${mm(a.y1)} → ${mm(a.x2)}, ${mm(a.y2)} mm · ${mm(Math.hypot(a.x2 - a.x1, a.y2 - a.y1))} mm`;
     strength.set(a.strength);
   }
-  store.subscribe((t) => ['selection', 'attractors', 'tool', 'load'].includes(t) && refresh());
+  store.subscribe((t) => {
+    if (['selection', 'attractors', 'load'].includes(t)) refresh();
+    if (t !== 'load') return;
+    restitution.set(s.settings.restitution);
+    friction.set(s.settings.friction);
+    solid.set(s.settings.solidAttractors);
+  });
   refresh();
-  return section('Gravità', tool.field, selected, hint);
+  return section('Gravità', h('div', { class: 'add-buttons' }, addPoint, addLine), selected, hint, restitution.field, friction.field, solid.field);
 }
 
 // Fields of each element type; every change writes straight into state.genera.params[type].
@@ -178,7 +199,7 @@ function typeFields(type, store, model) {
   }
 }
 
-function generaSection({ store, model }) {
+function generaSection({ store, model, pad }) {
   const s = store.state;
   const groups = Object.fromEntries(
     ['popolo', 'stemma', 'gormita', 'testo', 'numero'].map((type) => [type, h('div', { class: 'stack' }, typeFields(type, store, model))]),
@@ -200,7 +221,6 @@ function generaSection({ store, model }) {
     },
   });
   const showType = () => Object.entries(groups).forEach(([k, g]) => (g.hidden = k !== s.genera.type));
-  const pad = createPad({ store });
   const message = h('p', { class: 'message', role: 'alert', hidden: true });
   const generate = h('button', { type: 'button', class: 'primary' }, 'Genera');
   const undo = h('button', { type: 'button', onclick: () => model.undo() }, 'Annulla ultimo');
@@ -231,35 +251,17 @@ function generaSection({ store, model }) {
     'Genera',
     type.field,
     ...Object.values(groups),
-    h('div', { class: 'field' }, h('span', { class: 'label' }, 'Partenza'), pad.element),
+    h('div', { class: 'field' }, h('span', { class: 'label' }, 'Partenza'), pad.fields),
     h('div', { class: 'row' }, generate, undo, clear.element),
     message,
   );
 }
 
-function settingsSection({ store, model }) {
-  const s = store.state;
-  const restitution = rangeField({ label: 'Rimbalzo', value: s.settings.restitution, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ restitution: v }) });
-  const friction = rangeField({ label: 'Attrito', value: s.settings.friction, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ friction: v }) });
-  const solid = checkboxField({
-    label: 'Attrattori solidi (punti e segmenti)',
-    checked: s.settings.solidAttractors,
-    onChange: (v) => model.setSettings({ solidAttractors: v }),
-  });
-  store.subscribe((t) => {
-    if (t !== 'load') return;
-    restitution.set(s.settings.restitution);
-    friction.set(s.settings.friction);
-    solid.set(s.settings.solidAttractors);
-  });
-  return section('Impostazioni', restitution.field, friction.field, solid.field);
-}
-
 export function createPanels({ root, store, model, tools }) {
+  const pad = createPad({ store, model, select: tools.select });
   root.append(
-    sheetSection({ store, model }),
+    h('div', { class: 'pad-block' }, pad.element),
     gravitySection({ store, model, tools }),
-    generaSection({ store, model }),
-    settingsSection({ store, model }),
+    generaSection({ store, model, pad }),
   );
 }

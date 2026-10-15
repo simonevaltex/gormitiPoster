@@ -102,19 +102,27 @@ const clearSheet = async () => {
   await button('Svuota foglio').click();
   await button('Sì, svuota').click();
 };
-const addPoint = async (x, y) => {
-  await page.getByRole('radio', { name: '+ Punto' }).click();
-  const p = await toScreen(x, y);
-  await page.mouse.click(p.x, p.y);
-};
-const addSegment = async (a, b) => {
-  await page.getByRole('radio', { name: '+ Segmento' }).click();
-  const p = await toScreen(a.x, a.y);
-  const q = await toScreen(b.x, b.y);
+// "Punto" / "Linea" drop an attractor at a random spot; then we drag it (or its ends) into place.
+const dragOnSheet = async (from, to) => {
+  const p = await toScreen(from.x, from.y);
+  const q = await toScreen(to.x, to.y);
   await page.mouse.move(p.x, p.y);
   await page.mouse.down();
   await page.mouse.move(q.x, q.y, { steps: 10 });
   await page.mouse.up();
+};
+const lastAttractor = async () => (await state('s => s.attractors')).at(-1);
+const addPoint = async (x, y) => {
+  await button('Punto').click();
+  const a = await lastAttractor();
+  await dragOnSheet(a, { x, y });
+};
+const addSegment = async (a, b) => {
+  await button('Linea').click();
+  let s = await lastAttractor();
+  await dragOnSheet({ x: s.x1, y: s.y1 }, a);
+  s = await lastAttractor();
+  await dragOnSheet({ x: s.x2, y: s.y2 }, b);
 };
 // Clicks each attractor on the sheet and deletes it with the Canc key.
 const deleteAllAttractors = async () => {
@@ -330,11 +338,13 @@ const inchiostro = '#ff6600';
 await page.locator('#carta').fill(carta);
 await page.locator('#inchiostro').fill(inchiostro);
 await addPoint(148.5, 250);
-await button('Archivio').click();
 await page.getByLabel('Bleed (mm)').focus();
 await page.screenshot({ path: `${OUT}/c8-palette.png` });
 const shot1 = PNG.sync.read(readFileSync(`${OUT}/c8-palette.png`));
-await button('Archivio').click();
+await page.getByRole('tab', { name: 'Archivio' }).click();
+await page.screenshot({ path: `${OUT}/c8-palette-archive.png` });
+const shot3 = PNG.sync.read(readFileSync(`${OUT}/c8-palette-archive.png`));
+await page.getByRole('tab', { name: 'Crea' }).click();
 await button('Esporta').click();
 await page.screenshot({ path: `${OUT}/c8-palette-dialog.png` });
 const shot2 = PNG.sync.read(readFileSync(`${OUT}/c8-palette-dialog.png`));
@@ -344,11 +354,12 @@ const warningShown = await page.locator('#color-warning').isVisible();
 const reverted = await page.locator('#inchiostro').inputValue();
 const bad1 = offPalette(shot1, carta, inchiostro);
 const bad2 = offPalette(shot2, carta, inchiostro);
+const bad3 = offPalette(shot3, carta, inchiostro);
 check(
   '8',
   'carta e inchiostro cambiano tutto e nessun terzo colore resta a schermo',
-  bad1 === 0 && bad2 === 0 && warningShown && reverted === inchiostro,
-  `pixel fuori palette ${bad1} + ${bad2}; colori uguali → avviso ${warningShown}, ripristino ${reverted}`,
+  bad1 === 0 && bad2 === 0 && bad3 === 0 && warningShown && reverted === inchiostro,
+  `pixel fuori palette ${bad1} + ${bad2} + ${bad3}; colori uguali → avviso ${warningShown}, ripristino ${reverted}`,
 );
 
 // 9 — archive: save, number, reopen identical, still there after reload
@@ -362,10 +373,10 @@ await page.getByRole('radio', { name: 'Numero' }).click();
 await setSpawn(240, 40);
 await generate();
 await settled();
-await button('Salva poster').click();
+await button('Salva in archivio').click();
 await page.waitForFunction(() => window.__gormiti.store.state.archive.items.length === 1);
 const saved = await poses();
-await button('Archivio').click();
+await page.getByRole('tab', { name: 'Archivio' }).click();
 const rowNumber = (await page.locator('.archive-number').first().textContent()).trim();
 await page.screenshot({ path: `${OUT}/c9-archive.png` });
 await page.locator('#carta').fill('#ffffff');
@@ -373,7 +384,7 @@ await page.locator('#inchiostro').fill('#000000');
 await page.reload();
 await ready();
 const afterReload = await state('s => s.archive.items.length');
-await button('Archivio').click();
+await page.getByRole('tab', { name: 'Archivio' }).click();
 await button('Riapri').click();
 await page.waitForFunction(() => window.__gormiti.store.state.poster.id);
 const reopened = await poses();

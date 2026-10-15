@@ -5,7 +5,7 @@ import { createPhysics } from './physics.js';
 import { createModel } from './model.js';
 import { createSheetView } from './sheet-view.js';
 import { bindSheetTools } from './attractors.js';
-import { createPanels } from './ui/panels.js';
+import { createPanels, createSheetInfo } from './ui/panels.js';
 import { createHeader, loadStoredColors } from './ui/header.js';
 import { createArchive } from './archive.js';
 import { createExportDialog } from './ui/export-dialog.js';
@@ -28,11 +28,12 @@ const model = createModel({ store, physics, fonts });
 
 const zoomLabel = document.getElementById('zoom');
 const view = createSheetView(document.getElementById('sheet'), store, {
-  onZoom: (percent) => (zoomLabel.textContent = `${percent}%`),
+  onZoom: (percent) => (zoomLabel.textContent = `${percent.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`),
 });
 document.getElementById('fit').addEventListener('click', () => view.fit());
 const tools = bindSheetTools(view, store, model);
 createPanels({ root: document.getElementById('panel'), store, model, tools });
+createSheetInfo({ root: document.getElementById('sheet-info'), store, model });
 
 const exportDialog = createExportDialog({ root: document.getElementById('export-modal'), fonts });
 // The current sheet exports with the number it has (or will get) in the archive.
@@ -44,14 +45,13 @@ const archive = createArchive({
   model,
   fonts,
   root: document.getElementById('archive'),
-  toggleButton: document.getElementById('open-archive'),
+  tabs: { crea: document.getElementById('tab-crea'), archive: document.getElementById('open-archive') },
   onExport: (recipe) => recipe && exportDialog.show(recipe),
 });
 
 createHeader({
   store,
   onSave: () => archive.save(),
-  onToggleArchive: () => archive.toggle(),
   onExport: () => exportDialog.show(currentRecipe()),
 });
 

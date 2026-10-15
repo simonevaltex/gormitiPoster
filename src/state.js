@@ -10,7 +10,6 @@ export function initialState() {
     attractors: [],
     elements: [], // { id, type, params, built, before }
     seq: 0, // shared counter for element and attractor ids
-    tool: 'select', // 'select' | 'point' | 'segment'
     selectedId: null,
     spawn: { ...DEFAULTS.spawn },
     genera: { type: 'testo', params: defaultParams() },

@@ -7,38 +7,44 @@
   </head>
   <body>
     <header class="topbar">
-      <h1 class="brand">Gormiti <span>Poster</span></h1>
-      <div class="colors">
-        <label class="swatch">
-          <span class="label">Carta</span>
-          <input type="color" id="carta" value="#ffffff" />
-          <output class="mono" id="carta-hex">#FFFFFF</output>
-        </label>
-        <label class="swatch">
-          <span class="label">Inchiostro</span>
-          <input type="color" id="inchiostro" value="#000000" />
-          <output class="mono" id="inchiostro-hex">#000000</output>
-        </label>
-        <p id="color-warning" class="warning" role="alert" hidden>Carta e inchiostro devono essere diversi</p>
-      </div>
-      <nav class="actions" aria-label="Azioni">
-        <button id="save" type="button">Salva poster</button>
-        <button id="open-archive" type="button" aria-expanded="false" aria-controls="archive">Archivio</button>
-        <button id="open-export" type="button">Esporta</button>
+      <h1 class="brand">Gormiti Poster</h1>
+      <nav class="tabs" role="tablist" aria-label="Sezioni">
+        <button id="tab-crea" type="button" role="tab" aria-selected="true" aria-controls="layout">Crea</button>
+        <button id="open-archive" type="button" role="tab" aria-selected="false" aria-controls="archive">Archivio</button>
       </nav>
     </header>
 
-    <main class="layout">
+    <main class="layout" id="layout">
       <aside id="panel" class="panel" aria-label="Controlli"></aside>
       <section id="stage" class="stage" aria-label="Foglio">
         <svg id="sheet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Foglio A3"></svg>
+        <div class="colors">
+          <label class="swatch">
+            <input type="color" id="carta" value="#ffffff" aria-label="Carta" />
+            <output class="mono" id="carta-hex">#FFFFFF</output>
+          </label>
+          <label class="swatch">
+            <input type="color" id="inchiostro" value="#000000" aria-label="Inchiostro" />
+            <output class="mono" id="inchiostro-hex">#000000</output>
+          </label>
+          <p id="color-warning" class="warning" role="alert" hidden>Carta e inchiostro devono essere diversi</p>
+        </div>
+        <div class="stage-actions">
+          <button id="save" type="button" class="icon" aria-label="Salva in archivio" title="Salva in archivio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z" /></svg>
+          </button>
+          <button id="open-export" type="button" class="icon" aria-label="Esporta" title="Esporta">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v16h16V4h-4M12 3v11M8 10l4 4 4-4" /></svg>
+          </button>
+        </div>
+        <div id="sheet-info" class="sheet-info"></div>
         <div class="stage-tools">
           <button id="fit" type="button">Adatta</button>
           <span id="zoom" class="mono">100%</span>
         </div>
         <p id="status" class="status" role="status" hidden></p>
       </section>
-      <aside id="archive" class="archive" aria-label="Archivio" hidden></aside>
+      <section id="archive" class="archive" aria-label="Archivio" hidden></section>
     </main>
 
     <div id="export-modal" class="modal" hidden></div>

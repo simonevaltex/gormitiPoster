@@ -1,4 +1,5 @@
-// Archive panel: save the sheet as a recipe, list posters, reopen, export or delete them.
+// Archive view (the "Archivio" tab): save the sheet as a recipe, list posters, reopen, export
+// or delete them.
 import { storage } from './storage/index.js';
 import { composeSheetSvg } from './recipe.js';
 import { screenPaint } from './paint.js';
@@ -12,17 +13,19 @@ export const pad3 = (n) => String(n).padStart(3, '0');
 // Thumbnails stay light: one decimal (a tenth of a mm) is plenty at that size.
 const lighten = (svg) => svg.replace(/-?\d+\.\d+/g, (n) => String(+(+n).toFixed(1)));
 
-export function createArchive({ store, model, fonts, root, toggleButton, onExport }) {
+export function createArchive({ store, model, fonts, root, tabs, onExport }) {
   const s = store.state;
   const list = h('ol', { class: 'archive-list' });
-  const close = h('button', { type: 'button', onclick: () => toggle(false) }, 'Chiudi');
-  root.append(h('div', { class: 'archive-head' }, h('h2', { class: 'label' }, 'Archivio'), close), list);
+  root.append(h('h2', { class: 'visually-hidden' }, 'Archivio'), list);
 
+  // Switches between the Crea and Archivio tabs.
   function toggle(open = root.hidden) {
     root.hidden = !open;
-    toggleButton.setAttribute('aria-expanded', String(open));
-    if (open) close.focus();
+    tabs.archive.setAttribute('aria-selected', String(open));
+    tabs.crea.setAttribute('aria-selected', String(!open));
   }
+  tabs.crea.addEventListener('click', () => toggle(false));
+  tabs.archive.addEventListener('click', () => toggle(true));
 
   async function refresh() {
     try {
@@ -75,7 +78,7 @@ export function createArchive({ store, model, fonts, root, toggleButton, onExpor
   function render() {
     list.replaceChildren();
     if (!s.archive.items.length) {
-      list.append(h('li', { class: 'hint' }, 'Nessun poster salvato. Usa “Salva poster”.'));
+      list.append(h('li', { class: 'hint' }, 'Nessun poster salvato. Usa “Salva in archivio” nella scheda Crea.'));
       return;
     }
     for (const p of s.archive.items) {

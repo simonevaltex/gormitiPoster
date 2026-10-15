@@ -1,21 +1,24 @@
 // Start pad: a mini sheet (bleed included) inside a band of about 20% per side that stands for
 // "outside the sheet". Dragging the point picks where the next block starts, like the angle
 // picker of Photoshop shadows but in two dimensions. The arrow shows the field there.
+// The attractors are drawn too and can be selected and dragged right here, like on the sheet.
 import { A3 } from './constants.js';
 import { fieldAt } from './field.js';
+import { hitTest, dragPatch } from './attractors.js';
 import { fmt } from './svg.js';
 import { h, numberField } from './ui/dom.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const BAND = 0.2;
+const HIT_PX = 7;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-export function createPad({ store }) {
+export function createPad({ store, model, select }) {
   const s = store.state;
   const svg = document.createElementNS(NS, 'svg');
   svg.classList.add('pad');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Partenza: trascina il punto per scegliere da dove parte il blocco');
+  svg.setAttribute('aria-label', 'Partenza: trascina il punto per scegliere da dove parte il blocco, trascina gli attrattori per spostarli');
 
   const bounds = () => {
     const b = s.bleed;
@@ -56,11 +59,16 @@ export function createPad({ store }) {
       `<path class="guide" d="${outer}"/>` +
       `<path class="guide blank" d="${sheet}"/>`;
     if (r.b > 0) html += `<rect class="guide dashed" x="0" y="0" width="${A3.width}" height="${A3.height}"/>`;
+    const handle = (x, y, selected) =>
+      `<rect class="guide ${selected ? 'filled' : 'blank'}" x="${fmt(x - 2.5 * k)}" y="${fmt(y - 2.5 * k)}" width="${fmt(5 * k)}" height="${fmt(5 * k)}"/>`;
     for (const a of s.attractors) {
+      const selected = a.id === s.selectedId;
       html +=
         a.type === 'point'
-          ? `<circle class="guide filled" cx="${fmt(a.x)}" cy="${fmt(a.y)}" r="${fmt(2.5 * k)}"/>`
-          : `<path class="guide thick" d="M${fmt(a.x1)} ${fmt(a.y1)}L${fmt(a.x2)} ${fmt(a.y2)}"/>`;
+          ? handle(a.x, a.y, selected)
+          : `<path class="guide${selected ? ' thick' : ''}" d="M${fmt(a.x1)} ${fmt(a.y1)}L${fmt(a.x2)} ${fmt(a.y2)}"/>` +
+            handle(a.x1, a.y1, selected) +
+            handle(a.x2, a.y2, selected);
     }
     const f = fieldAt(s.spawn.x, s.spawn.y, s.attractors);
     const m = Math.hypot(f.x, f.y);
@@ -76,30 +84,50 @@ export function createPad({ store }) {
         `<path class="guide filled" d="M${fmt(tx)} ${fmt(ty)}L${fmt(tx - ux * head - uy * head * 0.6)} ${fmt(ty - uy * head + ux * head * 0.6)}` +
         `L${fmt(tx - ux * head + uy * head * 0.6)} ${fmt(ty - uy * head - ux * head * 0.6)}Z"/>`;
     }
-    html += `<circle class="guide filled pad-handle" cx="${fmt(s.spawn.x)}" cy="${fmt(s.spawn.y)}" r="${fmt(5 * k)}"/>`;
+    html += `<circle class="guide filled pad-handle" cx="${fmt(s.spawn.x)}" cy="${fmt(s.spawn.y)}" r="${fmt(3.5 * k)}"/>`;
     svg.innerHTML = html;
     x.set(+s.spawn.x.toFixed(1));
     y.set(+s.spawn.y.toFixed(1));
     tilt.set(s.spawn.tilt);
   }
+  const mmPerPx = () => bounds().w / (svg.clientWidth || 300);
 
   const toWorld = (e) => {
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
     return { x: +p.x.toFixed(1), y: +p.y.toFixed(1) };
   };
-  let dragging = false;
+  // Pressing on an attractor grabs it (the start point wins when they overlap); anywhere else
+  // moves the start point.
+  let drag = null;
   svg.addEventListener('pointerdown', (e) => {
-    dragging = true;
     svg.setPointerCapture(e.pointerId);
-    setSpawn(toWorld(e));
+    const p = toWorld(e);
+    const tol = HIT_PX * mmPerPx();
+    const onSpawn = Math.hypot(p.x - s.spawn.x, p.y - s.spawn.y) <= tol;
+    const hit = !onSpawn && hitTest(s.attractors, p, tol, s.selectedId);
+    if (hit) {
+      select(hit.id);
+      drag = { ...hit, start: p, orig: { ...s.attractors.find((a) => a.id === hit.id) } };
+    } else {
+      drag = { spawn: true };
+      setSpawn(p);
+    }
   });
-  svg.addEventListener('pointermove', (e) => dragging && setSpawn(toWorld(e)));
-  svg.addEventListener('pointerup', () => (dragging = false));
-  svg.addEventListener('pointercancel', () => (dragging = false));
+  svg.addEventListener('pointermove', (e) => {
+    const p = toWorld(e);
+    if (!drag) {
+      svg.classList.toggle('over-attractor', !!hitTest(s.attractors, p, HIT_PX * mmPerPx(), s.selectedId));
+      return;
+    }
+    if (drag.spawn) setSpawn(p);
+    else model.updateAttractor(drag.id, dragPatch(drag.part, drag.orig, p.x - drag.start.x, p.y - drag.start.y));
+  });
+  svg.addEventListener('pointerup', () => (drag = null));
+  svg.addEventListener('pointercancel', () => (drag = null));
 
-  store.subscribe((t) => ['spawn', 'attractors', 'bleed', 'load'].includes(t) && render());
+  store.subscribe((t) => ['spawn', 'attractors', 'selection', 'bleed', 'load'].includes(t) && render());
   new ResizeObserver(() => render()).observe(svg);
 
-  const element = h('div', { class: 'stack' }, svg, h('div', { class: 'grid2' }, x.field, y.field), tilt.field);
-  return { element, render };
+  const fields = h('div', { class: 'stack' }, h('div', { class: 'grid2' }, x.field, y.field), tilt.field);
+  return { element: svg, fields, render };
 }
