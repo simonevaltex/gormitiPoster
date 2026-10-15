@@ -696,7 +696,8 @@ input[type='color']::-moz-color-swatch {
 }
 
 .pad-block .pad {
-  width: 78%;
+  width: 100%;
+  height: auto;
   margin: 0 auto;
 }
 

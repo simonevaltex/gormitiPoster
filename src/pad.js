@@ -10,6 +10,7 @@ import { fmt } from './svg.js';
 const NS = 'http://www.w3.org/2000/svg';
 const BAND = 0.2;
 const HIT_PX = 7;
+const MAX_HEIGHT_PX = 400;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 export function createPad({ store, model, select }) {
@@ -33,10 +34,18 @@ export function createPad({ store, model, select }) {
     store.emit('spawn');
   }
 
+  const mmPerPx = () => {
+    const r = bounds();
+    return Math.max(r.w / (svg.clientWidth || 300), r.h / (svg.clientHeight || 420));
+  };
+
   function render() {
     const r = bounds();
     svg.setAttribute('viewBox', `${fmt(r.x0)} ${fmt(r.y0)} ${fmt(r.w)} ${fmt(r.h)}`);
-    const k = r.w / (svg.clientWidth || 300); // mm per screen px
+    // Never taller than MAX_HEIGHT_PX: the width follows the sheet proportions.
+    svg.style.aspectRatio = `${fmt(r.w)} / ${fmt(r.h)}`;
+    svg.style.maxWidth = `${fmt((MAX_HEIGHT_PX * r.w) / r.h)}px`;
+    const k = mmPerPx();
     const outer = `M${fmt(r.x0)} ${fmt(r.y0)}h${fmt(r.w)}v${fmt(r.h)}h${fmt(-r.w)}Z`;
     const sheet = `M${fmt(-r.b)} ${fmt(-r.b)}h${fmt(r.W)}v${fmt(r.H)}h${fmt(-r.W)}Z`;
     let html =
@@ -74,7 +83,6 @@ export function createPad({ store, model, select }) {
     html += `<circle class="guide filled pad-handle" cx="${fmt(s.spawn.x)}" cy="${fmt(s.spawn.y)}" r="${fmt(3.5 * k)}"/>`;
     svg.innerHTML = html;
   }
-  const mmPerPx = () => bounds().w / (svg.clientWidth || 300);
 
   const toWorld = (e) => {
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
