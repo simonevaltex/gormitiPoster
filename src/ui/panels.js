@@ -80,7 +80,7 @@ function gravitySection({ store, model, tools }) {
   const restitution = rangeField({ label: 'Rimbalzo', value: s.settings.restitution, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ restitution: v }) });
   const friction = rangeField({ label: 'Attrito', value: s.settings.friction, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ friction: v }) });
   const solid = checkboxField({
-    label: 'Attrattori solidi (punti e segmenti)',
+    label: 'Attrattori solidi',
     checked: s.settings.solidAttractors,
     onChange: (v) => model.setSettings({ solidAttractors: v }),
   });
