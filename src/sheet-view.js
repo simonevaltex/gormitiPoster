@@ -8,6 +8,8 @@ import { isTyping } from './ui/dom.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const MARGIN_PX = 32;
+// Overlays sit in the stage corners (colours, sheet readout, actions, zoom).
+const OVERLAYS = '.colors, .sheet-info, .stage-actions, .stage-tools';
 // 100% zoom = the A3 at its real print size at 300 ppi (one CSS px per printed pixel).
 const PX_PER_MM_300PPI = 300 / 25.4;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -49,7 +51,15 @@ export function createSheetView(svg, store, { onZoom } = {}) {
     const height = svg.clientHeight;
     if (!width || !height) return;
     const r = sheetRect();
-    fitScale = Math.min((width - 2 * MARGIN_PX) / r.w, (height - 2 * MARGIN_PX) / r.h);
+    // The sheet keeps clear of the corner overlays either by leaving room at the sides or above
+    // and below them: whichever lets it be bigger.
+    const overlays = [...svg.parentElement.querySelectorAll(OVERLAYS)];
+    const side = Math.max(MARGIN_PX, ...overlays.map((el) => el.offsetLeft + el.offsetWidth > width / 2 ? width - el.offsetLeft : el.offsetLeft + el.offsetWidth)) + 16;
+    const top = Math.max(MARGIN_PX, ...overlays.map((el) => el.offsetTop + el.offsetHeight > height / 2 ? height - el.offsetTop : el.offsetTop + el.offsetHeight)) + 16;
+    fitScale = Math.max(
+      Math.min((width - 2 * side) / r.w, (height - 2 * MARGIN_PX) / r.h),
+      Math.min((width - 2 * MARGIN_PX) / r.w, (height - 2 * top) / r.h),
+    );
     const w = width / fitScale;
     const h = height / fitScale;
     view = { x: r.x + r.w / 2 - w / 2, y: r.y + r.h / 2 - h / 2, w, h };

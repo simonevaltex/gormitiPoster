@@ -332,13 +332,13 @@ input[type='color']::-moz-color-swatch {
 /* ---------- layout ---------- */
 
 :root {
-  --column: 340px;
   --header: 80px;
 }
 
 .topbar {
   display: grid;
-  grid-template-columns: var(--column) minmax(0, 1fr);
+  /* the left column is one third of the window, in the header too */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   height: var(--header);
   border-bottom: var(--line);
   flex: none;
@@ -399,7 +399,7 @@ input[type='color']::-moz-color-swatch {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--column) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
 }
 
 .panel {
