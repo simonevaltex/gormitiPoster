@@ -134,16 +134,6 @@ function typeFields(type, store, model) {
       text.addEventListener('input', () => (p.text = text.value));
       return [
         h('label', { class: 'field' }, h('span', { class: 'label' }, 'Testo (Invio = nuova riga)'), text),
-        segmented({
-          label: 'Peso',
-          options: [
-            { value: 'regular', label: 'Regular' },
-            { value: 'medium', label: 'Medium' },
-            { value: 'bold', label: 'Bold' },
-          ],
-          value: p.weight,
-          onChange: set('weight'),
-        }).field,
         numberField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
         segmented({
           label: 'Stile',

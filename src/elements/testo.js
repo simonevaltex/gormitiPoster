@@ -2,7 +2,8 @@ import { layoutText } from '../text.js';
 import { rectPolygon } from '../geometry.js';
 
 // Free text block: title, second name, anything. One rigid body, however many lines.
-// Always uppercase. Two styles only: solid ink, or paper with a 0.5 mm ink outline.
+// Always uppercase, Geist Regular (older recipes keep the weight they were saved with).
+// Two styles only: solid ink, or paper with a 0.5 mm ink outline.
 export const OUTLINE_MM = 0.5;
 
 // Recipes saved before the two styles had free fill/stroke params: paper fill meant outline.
@@ -13,13 +14,13 @@ export default {
   label: 'Testo',
   defaults: {
     text: 'Gormiti',
-    weight: 'bold',
+    weight: 'regular',
     capHeight: 40,
     style: 'ink', // 'ink' | 'outline'
   },
   validate: (p) => (p.text.trim() ? null : 'empty-text'),
   build(p, { fonts, paint }) {
-    const font = fonts[p.weight] ?? fonts.bold;
+    const font = fonts[p.weight] ?? fonts.regular;
     const layout = layoutText(font, p.text, { capHeight: p.capHeight, uppercase: true });
     const d = layout.lines.map((line) => line.d).join('');
     const outline = styleOf(p) === 'outline';
