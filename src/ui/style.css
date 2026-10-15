@@ -622,3 +622,34 @@ input[type='color']::-moz-color-swatch {
   border: 1px dashed var(--inchiostro);
   font: 500 12px/1.3 var(--mono);
 }
+
+.segmented.compact {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.segmented.compact button {
+  padding: 8px 2px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.confirm-wrap {
+  display: contents;
+}
+
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pad {
+  display: block;
+  width: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+}

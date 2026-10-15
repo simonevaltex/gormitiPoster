@@ -8,6 +8,7 @@ import { bindSheetTools } from './attractors.js';
 import { createPanels } from './ui/panels.js';
 import { createHeader, loadStoredColors } from './ui/header.js';
 import { showStatus } from './ui/status.js';
+import { isTyping } from './ui/dom.js';
 import { STEP_MS } from './constants.js';
 
 const fonts = await loadFonts((file) =>
@@ -47,6 +48,14 @@ store.subscribe((topic) => {
 });
 
 model.reset();
+
+// Cmd/Ctrl+Z removes the last block (text fields keep their own undo).
+window.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !isTyping(e)) {
+    e.preventDefault();
+    model.undo();
+  }
+});
 
 // Fixed-step loop with an accumulator: the simulation never sees a variable delta.
 let last = performance.now();

@@ -40,11 +40,11 @@ export function numberField({ label, unit, value, min, max, step = 1, onChange }
 }
 
 // Segmented control: buttons with role="radio"; the active one is inverted.
-export function segmented({ label, options, value, onChange }) {
+export function segmented({ label, options, value, onChange, compact = false }) {
   const buttons = options.map((o) =>
     h('button', { type: 'button', role: 'radio', 'aria-checked': String(o.value === value), dataset: { value: o.value } }, o.label),
   );
-  const group = h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': label }, buttons);
+  const group = h('div', { class: compact ? 'segmented compact' : 'segmented', role: 'radiogroup', 'aria-label': label }, buttons);
   const set = (v) => buttons.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === v)));
   group.addEventListener('click', (e) => {
     const b = e.target.closest('button[role="radio"]');
