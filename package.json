@@ -12,11 +12,13 @@
     "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
+    "clipper-lib": "6.4.2",
     "jspdf": "^4.2.1",
     "matter-js": "0.20.0",
     "opentype.js": "2.0.0",
     "pdf-lib": "^1.17.1",
-    "svg2pdf.js": "^2.8.1"
+    "svg2pdf.js": "^2.8.1",
+    "svgpath": "2.6.0"
   },
   "devDependencies": {
     "pdfjs-dist": "^6.4.299",

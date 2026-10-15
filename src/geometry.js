@@ -166,7 +166,7 @@ export function boundsOf(pts) {
   return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
 }
 
-function distanceToSegment(p, a, b) {
+export function distanceToSegment(p, a, b) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len2 = dx * dx + dy * dy;
