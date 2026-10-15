@@ -89,8 +89,9 @@ export function checkboxField({ label, checked, onChange }) {
   return { field, set: (v) => (input.checked = v) };
 }
 
-// Range + number kept in sync.
-export function rangeField({ label, unit, value, min, max, step = 1, onChange }) {
+// Range + number kept in sync. Double-clicking the slider puts it back to `reset` (by default the
+// value it was created with).
+export function rangeField({ label, unit, value, min, max, step = 1, reset = value, onChange }) {
   const range = h('input', { type: 'range', min, max, step, value: String(value), 'aria-label': label });
   const number = h('input', { type: 'number', min, max, step, value: String(value), 'aria-label': `${label} (valore)` });
   const emit = (v) => {
@@ -101,6 +102,7 @@ export function rangeField({ label, unit, value, min, max, step = 1, onChange })
     onChange(c);
   };
   range.addEventListener('input', () => emit(parseFloat(range.value)));
+  range.addEventListener('dblclick', () => emit(reset));
   number.addEventListener('input', () => emit(parseFloat(number.value)));
   number.addEventListener('change', () => (number.value = range.value));
   const field = h(

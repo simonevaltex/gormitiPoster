@@ -1,6 +1,6 @@
 // Left column: the start pad (with the attractors), then the Gravità and Genera sections, which
 // open and close. The sheet readout with the bleed sits over the stage, bottom left.
-import { A3 } from '../constants.js';
+import { A3, DEFAULTS, DEFAULT_SETTINGS } from '../constants.js';
 import { POPOLI } from '../popoli.js';
 import { createPad } from '../pad.js';
 import { randomPoint, randomSegment } from '../attractors.js';
@@ -58,7 +58,7 @@ function gravitySection({ store, model, tools }) {
   const readout = h('p', { class: 'readout' });
   const strength = rangeField({
     label: 'Forza',
-    value: 50,
+    value: DEFAULTS.strength,
     min: 1,
     max: 100,
     onChange: (v) => s.selectedId && model.updateAttractor(s.selectedId, { strength: Math.round(v) }),
@@ -77,8 +77,8 @@ function gravitySection({ store, model, tools }) {
   );
   const selected = h('div', { class: 'stack selected' }, readout, strength.field, h('div', { class: 'row' }, remove, h('span', { class: 'hint' }, 'oppure tasto Canc')));
 
-  const restitution = rangeField({ label: 'Rimbalzo', value: s.settings.restitution, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ restitution: v }) });
-  const friction = rangeField({ label: 'Attrito', value: s.settings.friction, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ friction: v }) });
+  const restitution = rangeField({ label: 'Rimbalzo', value: s.settings.restitution, reset: DEFAULT_SETTINGS.restitution, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ restitution: v }) });
+  const friction = rangeField({ label: 'Attrito', value: s.settings.friction, reset: DEFAULT_SETTINGS.friction, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ friction: v }) });
   const solid = checkboxField({
     label: 'Attrattori solidi',
     checked: s.settings.solidAttractors,
