@@ -131,6 +131,7 @@ export function createModel({ store, physics, fonts }) {
   function toRecipe({ id, number, date }) {
     physics.settle(PHYS.settleMaxSteps);
     physics.sleepAll();
+    store.emit('poses'); // the sheet jumps to the final positions that get saved
     const poses = physics.poses();
     return {
       version: RECIPE_VERSION,

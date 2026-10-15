@@ -7,6 +7,7 @@ import { createSheetView } from './sheet-view.js';
 import { bindSheetTools } from './attractors.js';
 import { createPanels } from './ui/panels.js';
 import { createHeader, loadStoredColors } from './ui/header.js';
+import { createArchive } from './archive.js';
 import { showStatus } from './ui/status.js';
 import { isTyping } from './ui/dom.js';
 import { STEP_MS } from './constants.js';
@@ -32,22 +33,30 @@ document.getElementById('fit').addEventListener('click', () => view.fit());
 const tools = bindSheetTools(view, store, model);
 createPanels({ root: document.getElementById('panel'), store, model, tools });
 
+const archive = createArchive({
+  store,
+  model,
+  fonts,
+  root: document.getElementById('archive'),
+  toggleButton: document.getElementById('open-archive'),
+  onExport: () => showStatus('Esportazione in arrivo'),
+});
+
 createHeader({
   store,
-  onSave: () => showStatus('Archivio in arrivo'),
-  onToggleArchive: () => showStatus('Archivio in arrivo'),
+  onSave: () => archive.save(),
+  onToggleArchive: () => archive.toggle(),
   onExport: () => showStatus('Esportazione in arrivo'),
 });
 
 // Elements appear/disappear and jump to their pose whenever the model rebuilds the world.
 store.subscribe((topic) => {
-  if (topic === 'elements' || topic === 'load') {
-    view.syncElements();
-    view.updatePoses(physics.poses());
-  }
+  if (topic === 'elements' || topic === 'load') view.syncElements();
+  if (topic === 'elements' || topic === 'load' || topic === 'poses') view.updatePoses(physics.poses());
 });
 
 model.reset();
+await archive.refresh();
 
 // Cmd/Ctrl+Z removes the last block (text fields keep their own undo).
 window.addEventListener('keydown', (e) => {
