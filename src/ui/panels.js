@@ -223,7 +223,6 @@ function generaSection({ store, model, pad }) {
   const showType = () => Object.entries(groups).forEach(([k, g]) => (g.hidden = k !== s.genera.type));
   const message = h('p', { class: 'message', role: 'alert', hidden: true });
   const generate = h('button', { type: 'button', class: 'primary' }, 'Genera');
-  const undo = h('button', { type: 'button', onclick: () => model.undo() }, 'Annulla ultimo');
   const clear = confirmButton({ label: 'Svuota foglio', question: 'Svuotare il foglio?', confirmLabel: 'Sì, svuota', onConfirm: () => model.clear() });
 
   generate.addEventListener('click', () => {
@@ -241,7 +240,6 @@ function generaSection({ store, model, pad }) {
     } else if (message.textContent === MESSAGES['no-attractors']) {
       message.hidden = true;
     }
-    undo.disabled = s.elements.length === 0;
   }
   store.subscribe((t) => ['attractors', 'elements', 'load'].includes(t) && refresh());
   refresh();
@@ -252,7 +250,8 @@ function generaSection({ store, model, pad }) {
     type.field,
     ...Object.values(groups),
     h('div', { class: 'field' }, h('span', { class: 'label' }, 'Partenza'), pad.fields),
-    h('div', { class: 'row' }, generate, undo, clear.element),
+    h('div', { class: 'row' }, generate, clear.element),
+    h('p', { class: 'hint' }, 'Cmd/Ctrl+Z toglie l’ultimo blocco'),
     message,
   );
 }

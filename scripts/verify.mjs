@@ -191,7 +191,8 @@ check(
 );
 
 // 3 — Annulla then Genera with the same values: identical result
-await button('Annulla ultimo').click();
+await page.locator('body').click({ position: { x: 5, y: 5 } }); // focus off the text fields
+await page.keyboard.press('ControlOrMeta+z');
 await generate();
 await settled();
 const again = (await poses())[0];
