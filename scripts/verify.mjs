@@ -159,6 +159,17 @@ const exportFile = async (name, { format = 'PDF vettoriale', marks = false } = {
   return { path, suggested: download.suggestedFilename() };
 };
 
+// Save and export need one block of every type: adds the missing ones, each from its own start.
+const completeSheet = async () => {
+  const starts = { Popolo: [60, 60], Stemma: [250, 50], Gormita: [148.5, 120], Testo: [148.5, 200], Numero: [250, 120] };
+  for (const label of await page.evaluate(() => window.__gormiti.model.missingTypes())) {
+    await page.getByRole('radio', { name: label }).click();
+    await setSpawn(...starts[label]);
+    await generate();
+    await settled();
+  }
+};
+
 await page.goto(base);
 await ready();
 
@@ -310,6 +321,7 @@ await generate();
 await settled();
 const bleedBottom = await bottomOf(0);
 await page.screenshot({ path: `${OUT}/c7-bleed.png` });
+await completeSheet();
 const pdfs = {};
 pdfs.b3 = await exportFile('c7-bleed3.pdf');
 pdfs.b3m = await exportFile('c7-bleed3-marks.pdf', { marks: true });
@@ -378,6 +390,10 @@ await page.getByRole('radio', { name: 'Numero' }).click();
 await setSpawn(240, 40);
 await generate();
 await settled();
+await button('Salva in archivio').click(); // Popolo, Stemma and Testo are missing: refused
+const refusal = (await page.locator('#status').textContent()).trim();
+const refusedCount = await state('s => s.archive.items.length');
+await completeSheet();
 await button('Salva in archivio').click();
 await page.waitForFunction(() => window.__gormiti.store.state.archive.items.length === 1);
 const saved = await poses();
@@ -396,13 +412,15 @@ const reopened = await poses();
 const restoredColours = await state('s => s.colors');
 check(
   '9',
-  'salvato compare in archivio con numero progressivo, si riapre identico e resta dopo il ricaricamento',
+  'si salva solo con tutti i tipi; compare in archivio con numero progressivo, si riapre identico e resta dopo il ricaricamento',
   rowNumber === 'N° 001' &&
+    refusedCount === 0 &&
+    refusal === 'Per salvare mancano: Popolo, Stemma, Testo' &&
     afterReload === 1 &&
     JSON.stringify(reopened) === JSON.stringify(saved) &&
     restoredColours.carta === carta &&
     restoredColours.inchiostro === inchiostro,
-  `${rowNumber}, dopo ricarica ${afterReload} poster, colori ${restoredColours.carta}/${restoredColours.inchiostro}`,
+  `rifiutato senza tutti i tipi («${refusal}»), poi ${rowNumber}, dopo ricarica ${afterReload} poster, colori ${restoredColours.carta}/${restoredColours.inchiostro}`,
 );
 
 // 10 — the PDF: outlines only, exact colours, renders as on screen

@@ -1,5 +1,5 @@
 // Sheet actions, without any DOM: Genera, Annulla, Svuota, attractor edits, recipe in/out.
-import { buildElement, validateParams } from './elements/index.js';
+import { ELEMENT_TYPES, buildElement, validateParams } from './elements/index.js';
 import { fieldAt, targetAngle } from './field.js';
 import { screenPaint } from './paint.js';
 import { DEFAULT_SEGMENT, DEFAULT_SETTINGS, PHYS } from './constants.js';
@@ -30,6 +30,13 @@ export function createModel({ store, physics, fonts }) {
   function snapshot() {
     return { poses: physics.states(), attractorsKey: attractorsKey() };
   }
+
+  // A poster is complete only with at least one block of every type: until then it can't be saved
+  // or exported. Returns the labels of the missing types (empty when complete).
+  const missingTypes = () =>
+    Object.entries(ELEMENT_TYPES)
+      .filter(([type]) => !s.elements.some((e) => e.type === type))
+      .map(([, t]) => t.label);
 
   function generate() {
     if (!s.attractors.length) return { ok: false, reason: 'no-attractors' };
@@ -185,6 +192,7 @@ export function createModel({ store, physics, fonts }) {
     setSettings,
     setBleed,
     displayNumber,
+    missingTypes,
     refreshNumberBadges,
     toRecipe,
     loadRecipe,

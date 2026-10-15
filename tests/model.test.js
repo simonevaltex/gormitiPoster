@@ -167,3 +167,13 @@ it('the Numero badge follows the poster number', () => {
   model.refreshNumberBadges();
   expect(s.elements[0].built.markup).not.toEqual(before);
 });
+
+it('a poster is complete only with every element type', () => {
+  const { s, model } = setup();
+  expect(model.missingTypes()).toEqual(['Popolo', 'Stemma', 'Gormita', 'Testo', 'Numero']);
+  s.genera.type = 'stemma';
+  model.generate();
+  s.genera.type = 'numero';
+  model.generate();
+  expect(model.missingTypes()).toEqual(['Popolo', 'Gormita', 'Testo']);
+});

@@ -59,7 +59,9 @@ output `dist`). Non servono variabili d'ambiente né backend.
 
 L'archivio salva la "ricetta" del poster, non il PDF: id, numero, data, colori, bleed,
 impostazioni, attrattori, elementi (tipo, parametri, x, y, angolo finale) e una miniatura SVG
-senza guide. **Salva in archivio** (icona segnalibro) aggiunge sempre un nuovo poster con numero = massimo + 1 (i doppioni
+senza guide. Un poster si può salvare o esportare solo quando sul foglio c'è almeno un blocco di
+ogni tipo (Popolo, Stemma, Gormita, Testo, Numero); altrimenti un messaggio dice cosa manca.
+**Salva in archivio** (icona segnalibro) aggiunge sempre un nuovo poster con numero = massimo + 1 (i doppioni
 sono ammessi); il badge Numero mostra lo stesso numero.
 
 Oggi i poster stanno in IndexedDB, nel browser (`src/storage/local.js`). Tutto il resto del codice

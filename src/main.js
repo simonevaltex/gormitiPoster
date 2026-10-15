@@ -49,10 +49,17 @@ const archive = createArchive({
   onExport: (recipe) => recipe && exportDialog.show(recipe),
 });
 
+// Save and export need every element type on the sheet; otherwise say what is missing.
+function complete(action) {
+  const missing = model.missingTypes();
+  if (missing.length) showStatus(`Per ${action} mancano: ${missing.join(', ')}`, 6000);
+  return missing.length === 0;
+}
+
 createHeader({
   store,
-  onSave: () => archive.save(),
-  onExport: () => exportDialog.show(currentRecipe()),
+  onSave: () => complete('salvare') && archive.save(),
+  onExport: () => complete('esportare') && exportDialog.show(currentRecipe()),
 });
 
 // Elements appear/disappear and jump to their pose whenever the model rebuilds the world.
