@@ -4,25 +4,22 @@ import { A3 } from './constants.js';
 import { poseTransform } from './recipe.js';
 import { attractorGuide } from './attractors.js';
 import { fmt } from './svg.js';
+import { isTyping } from './ui/dom.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const MARGIN_PX = 32;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-export const isTyping = (e) => {
-  const t = e.target;
-  return t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
-};
-
 export function createSheetView(svg, store, { onZoom } = {}) {
   const s = store.state;
   svg.innerHTML =
     '<defs><clipPath id="bleed-clip"><rect/></clipPath></defs>' +
-    '<rect class="paper fp"/><g class="elements" clip-path="url(#bleed-clip)"></g><g class="guides"></g>';
+    '<rect class="paper fp"/><g class="elements" clip-path="url(#bleed-clip)"></g><g class="guides"></g><g class="preview"></g>';
   const paper = svg.querySelector('.paper');
   const clipRect = svg.querySelector('#bleed-clip rect');
   const elementsLayer = svg.querySelector('.elements');
   const guides = svg.querySelector('.guides');
+  const preview = svg.querySelector('.preview');
   const nodes = new Map(); // element id → <g>
   let view = { x: 0, y: 0, w: A3.width, h: A3.height }; // viewBox, mm
   let fitScale = 1; // px per mm when the sheet fits the stage
@@ -177,6 +174,11 @@ export function createSheetView(svg, store, { onZoom } = {}) {
     guides.innerHTML = html;
   }
 
+  // Dashed line while a new segment is being drawn (null clears it).
+  function renderPreview(a, b) {
+    preview.innerHTML = a ? `<path class="guide dashed" d="M${fmt(a.x)} ${fmt(a.y)}L${fmt(b.x)} ${fmt(b.y)}"/>` : '';
+  }
+
   store.subscribe((topic) => {
     if (topic === 'bleed' || topic === 'load') {
       layoutPaper();
@@ -194,5 +196,5 @@ export function createSheetView(svg, store, { onZoom } = {}) {
   layoutPaper();
   fit();
 
-  return { syncElements, updatePoses, renderGuides, fit, toWorld, pxPerMm, svg };
+  return { syncElements, updatePoses, renderGuides, renderPreview, fit, toWorld, pxPerMm, svg };
 }

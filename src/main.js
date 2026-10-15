@@ -4,6 +4,8 @@ import { createStore } from './state.js';
 import { createPhysics } from './physics.js';
 import { createModel } from './model.js';
 import { createSheetView } from './sheet-view.js';
+import { bindSheetTools } from './attractors.js';
+import { createPanels } from './ui/panels.js';
 import { createHeader, loadStoredColors } from './ui/header.js';
 import { showStatus } from './ui/status.js';
 import { STEP_MS } from './constants.js';
@@ -26,6 +28,8 @@ const view = createSheetView(document.getElementById('sheet'), store, {
   onZoom: (percent) => (zoomLabel.textContent = `${percent}%`),
 });
 document.getElementById('fit').addEventListener('click', () => view.fit());
+const tools = bindSheetTools(view, store, model);
+createPanels({ root: document.getElementById('panel'), store, model, tools });
 
 createHeader({
   store,
