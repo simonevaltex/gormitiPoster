@@ -166,7 +166,7 @@ await ready();
 const initial = await state('s => s.attractors');
 const seg = initial[0];
 await page.getByLabel('Testo', { exact: true }).fill('Sommo Luminescente');
-await page.getByLabel('Altezza maiuscole (mm)').filter({ visible: true }).fill('22');
+await page.getByLabel('Altezza maiuscole (valore)').filter({ visible: true }).fill('22');
 const pad = page.locator('svg.pad');
 const padBox = await pad.boundingBox();
 await page.mouse.click(padBox.x + padBox.width * 0.45, padBox.y + padBox.height * 0.3); // pick the start on the pad

@@ -15,7 +15,7 @@ export default {
   defaults: {
     text: 'Gormiti',
     weight: 'regular',
-    capHeight: 40,
+    capHeight: 30,
     style: 'ink', // 'ink' | 'outline'
   },
   validate: (p) => (p.text.trim() ? null : 'empty-text'),

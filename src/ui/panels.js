@@ -114,7 +114,7 @@ function typeFields(type, store, model) {
     case 'popolo':
       return [
         selectField({ label: 'Popolo', options: popoloOptions, value: p.popolo, onChange: set('popolo') }).field,
-        numberField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 200, step: 0.5, onChange: set('capHeight') }).field,
+        rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 200, step: 0.5, onChange: set('capHeight') }).field,
       ];
     case 'stemma':
       return [
@@ -134,7 +134,7 @@ function typeFields(type, store, model) {
       text.addEventListener('input', () => (p.text = text.value));
       return [
         h('label', { class: 'field' }, h('span', { class: 'label' }, 'Testo (Invio = nuova riga)'), text),
-        numberField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
+        rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
         segmented({
           label: 'Stile',
           options: [

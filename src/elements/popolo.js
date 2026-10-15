@@ -47,6 +47,6 @@ export function popoloLettering({ popolo, capHeight: c }, { fonts, paint }) {
 export default {
   type: 'popolo',
   label: 'Popolo',
-  defaults: { popolo: 'aria', capHeight: 22 },
+  defaults: { popolo: 'aria', capHeight: 30 },
   build: popoloLettering,
 };
