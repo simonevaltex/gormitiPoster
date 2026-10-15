@@ -126,7 +126,7 @@ function typeFields(type, store, model) {
       name.addEventListener('input', () => (p.name = name.value));
       return [
         h('label', { class: 'field' }, h('span', { class: 'label' }, 'Nome (la stessa parola dà la stessa forma)'), name),
-        numberField({ label: 'Larghezza', unit: 'mm', value: p.width, min: 20, max: 600, step: 1, onChange: set('width') }).field,
+        rangeField({ label: 'Larghezza', unit: 'mm', value: p.width, min: 20, max: 600, step: 1, onChange: set('width') }).field,
       ];
     }
     case 'testo': {
