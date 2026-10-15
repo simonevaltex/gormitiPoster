@@ -57,7 +57,7 @@ body {
   flex-direction: column;
   background: var(--carta);
   color: var(--inchiostro);
-  font: 14px/1.35 var(--sans);
+  font: 16px/1.35 var(--sans);
   caret-color: var(--inchiostro);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -74,7 +74,7 @@ body {
 }
 
 .label {
-  font: 500 11px/1.2 var(--mono);
+  font: 500 16px/1.2 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -95,7 +95,7 @@ body {
 /* ---------- controls ---------- */
 
 button {
-  font: 500 12px/1 var(--sans);
+  font: 500 16px/1 var(--sans);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--inchiostro);
@@ -144,7 +144,7 @@ input[type='text'],
 textarea,
 select {
   width: 100%;
-  font: 13px/1.25 var(--mono);
+  font: 16px/1.25 var(--mono);
   color: var(--inchiostro);
   background: var(--carta);
   border: var(--line);
@@ -155,7 +155,7 @@ select {
 
 textarea {
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 16px;
   resize: none;
   display: block;
 }
@@ -312,7 +312,7 @@ input[type='color']::-moz-color-swatch {
     padding: 0;
   }
   .select option {
-    font: 13px/1.25 var(--mono);
+    font: 16px/1.25 var(--mono);
     padding: 6px 8px;
     background: var(--carta);
     color: var(--inchiostro);
@@ -350,7 +350,7 @@ input[type='color']::-moz-color-swatch {
   margin: 0;
   padding: 0 20px;
   border-right: var(--line);
-  font: 400 20px/1 var(--sans);
+  font: 400 16px/1 var(--sans);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -367,7 +367,7 @@ input[type='color']::-moz-color-swatch {
   height: 100%;
   padding: 0 20px;
   border: 0;
-  font: 400 20px/1 var(--sans);
+  font: 400 16px/1 var(--sans);
   letter-spacing: 0;
   text-align: left;
 }
@@ -454,7 +454,7 @@ input[type='color']::-moz-color-swatch {
 }
 
 .swatch output {
-  font-size: 12px;
+  font-size: 16px;
   min-width: 7ch;
 }
 
@@ -463,7 +463,7 @@ input[type='color']::-moz-color-swatch {
   padding: 6px 10px;
   background: var(--inchiostro);
   color: var(--carta);
-  font: 500 12px/1.2 var(--mono);
+  font: 500 16px/1.2 var(--mono);
 }
 
 .stage-actions {
@@ -576,11 +576,11 @@ input[type='color']::-moz-color-swatch {
 
 .stage-tools button {
   padding: 8px 14px;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 .stage-tools .mono {
-  font-size: 13px;
+  font-size: 16px;
   min-width: 6ch;
   text-align: right;
 }
@@ -595,7 +595,7 @@ input[type='color']::-moz-color-swatch {
   max-width: calc(100% - 520px);
   background: var(--inchiostro);
   color: var(--carta);
-  font: 500 12px/1.3 var(--mono);
+  font: 500 16px/1.3 var(--mono);
 }
 
 .loading {
@@ -604,7 +604,7 @@ input[type='color']::-moz-color-swatch {
   display: grid;
   place-items: center;
   background: var(--carta);
-  font: 500 12px/1 var(--mono);
+  font: 500 16px/1 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -666,7 +666,7 @@ input[type='color']::-moz-color-swatch {
   }
   .brand,
   .tabs button {
-    font-size: 15px;
+    font-size: 16px;
     padding: 0 12px;
   }
   .layout {
@@ -715,7 +715,7 @@ input[type='color']::-moz-color-swatch {
   width: 100%;
   padding: 18px 16px;
   border: 0;
-  font: 400 20px/1 var(--sans);
+  font: 400 16px/1 var(--sans);
   letter-spacing: 0;
   text-align: left;
 }
@@ -756,7 +756,7 @@ input[type='color']::-moz-color-swatch {
 
 .add-buttons button {
   padding: 13px 12px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 400;
 }
 
@@ -827,7 +827,7 @@ input[type='color']::-moz-color-swatch {
 .hint,
 .readout {
   margin: 0;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .readout {
@@ -838,18 +838,19 @@ input[type='color']::-moz-color-swatch {
   margin: 0;
   padding: 8px 10px;
   border: 1px dashed var(--inchiostro);
-  font: 500 12px/1.3 var(--mono);
+  font: 500 16px/1.3 var(--mono);
 }
 
 .segmented.compact {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 0 0 1px 1px;
 }
 
-.segmented.compact button {
+.segmented.compact button,
+.segmented.compact button:first-child {
+  margin: 0 0 -1px -1px;
   padding: 8px 2px;
-  font-size: 11px;
   letter-spacing: 0.04em;
 }
 
@@ -914,7 +915,7 @@ input[type='color']::-moz-color-swatch {
 
 .archive-number {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -924,7 +925,7 @@ input[type='color']::-moz-color-swatch {
 
 .archive-item .row button {
   padding: 7px 8px;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 /* ---------- export dialog (no dimming: the backdrop just catches clicks) ---------- */

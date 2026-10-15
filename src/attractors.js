@@ -38,7 +38,7 @@ export function attractorGuide(a, selected, mmPerPx) {
   const px = (n) => fmt(n * mmPerPx);
   const stroke = selected ? 'guide thick' : 'guide dashed';
   const label = (x, y) =>
-    selected ? `<text class="guide-label" x="${fmt(x)}" y="${fmt(y)}" font-size="${px(11)}">${a.strength}</text>` : '';
+    selected ? `<text class="guide-label" x="${fmt(x)}" y="${fmt(y)}" font-size="${px(16)}">${a.strength}</text>` : '';
   if (a.type === 'point') {
     const r = 7 * mmPerPx;
     return (
