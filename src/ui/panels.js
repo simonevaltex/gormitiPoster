@@ -119,7 +119,7 @@ function typeFields(type, store, model) {
     case 'stemma':
       return [
         selectField({ label: 'Popolo', options: popoloOptions, value: p.popolo, onChange: set('popolo') }).field,
-        numberField({ label: 'Diametro', unit: 'mm', value: p.diameter, min: 5, max: 297, step: 0.5, onChange: set('diameter') }).field,
+        rangeField({ label: 'Diametro', unit: 'mm', value: p.diameter, min: 5, max: 297, step: 0.5, onChange: set('diameter') }).field,
       ];
     case 'gormita': {
       const name = h('input', { type: 'text', value: p.name, maxlength: 60, autocomplete: 'off', spellcheck: 'false' });
