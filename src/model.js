@@ -11,7 +11,8 @@ export function createModel({ store, physics, fonts }) {
   const displayNumber = () => s.poster.number ?? s.archive.nextNumber;
   const ctx = () => ({ fonts, paint: screenPaint, posterNumber: displayNumber() });
   const nextId = (prefix) => `${prefix}${++s.seq}`;
-  const attractorsKey = () => JSON.stringify(s.attractors);
+  // Anything that can thaw resting blocks: if it changed, an old snapshot no longer matches the sheet.
+  const attractorsKey = () => JSON.stringify([s.attractors, s.settings]);
 
   // Physics inputs for the current elements at the given poses ({ id: { x, y, angle } }).
   const inputs = (poses) =>
@@ -23,12 +24,11 @@ export function createModel({ store, physics, fonts }) {
     physics.rebuild({ attractors: s.attractors, elements: inputs(poses), settings: s.settings });
   }
 
-  // Lets anything still moving come to rest, then freezes it: Genera always starts from a
-  // settled snapshot, so Annulla + Genera replays exactly the same simulation.
+  // The world as it is right now, blocks still falling included (with their speed and spin):
+  // Genera never fast-forwards them. Genera rebuilds the engine from this snapshot and Annulla
+  // goes back to it, so Annulla + Genera replays exactly the same simulation.
   function snapshot() {
-    physics.settle(PHYS.settleMaxSteps);
-    physics.sleepAll();
-    return { poses: Object.fromEntries(physics.poses()), attractorsKey: attractorsKey() };
+    return { poses: physics.states(), attractorsKey: attractorsKey() };
   }
 
   function generate() {
@@ -53,13 +53,21 @@ export function createModel({ store, physics, fonts }) {
     return { ok: true, id };
   }
 
+  // Annulla goes back in time: when nothing changed since the last Genera, the engine returns to
+  // the snapshot taken then (blocks that were falling fall again from there), so Annulla + Genera
+  // replays the same result. If the field or the settings changed, or the poster was reopened,
+  // the last block is just taken out and everything else carries on from where it is.
   function undo() {
     const last = s.elements.pop();
     if (!last) return false;
-    const poses = last.before ? last.before.poses : Object.fromEntries(physics.poses());
-    rebuild(poses);
-    // Reopened posters have no snapshot, and the field may have changed since: resettle.
-    if (!last.before || last.before.attractorsKey !== attractorsKey()) physics.wakeAll();
+    const b = last.before;
+    const replay = b && b.attractorsKey === attractorsKey();
+    if (replay) {
+      rebuild(b.poses);
+    } else {
+      physics.removeElement(last.id);
+      physics.wakeAll(); // whatever rested on it must be free to fall
+    }
     store.emit('elements');
     return true;
   }

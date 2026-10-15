@@ -47,9 +47,11 @@ output `dist`). Non servono variabili d'ambiente né backend.
   fondo tiene i testi dritti, un punto al centro li dispone a raggiera.
 - **Fisica**: Matter.js a passo fisso (1000/60 ms con accumulatore, 4 sotto-passi), nessun numero
   casuale. I blocchi fermi diventano ostacoli immobili; spostare un attrattore li risveglia.
-- **Genera / Annulla**: prima di ogni Genera il mondo fisico viene ricostruito da zero a partire
-  dalle posizioni ferme; Annulla torna a quelle stesse posizioni, quindi Annulla + Genera con gli
-  stessi valori dà lo stesso identico risultato.
+- **Genera / Annulla**: a ogni Genera si fotografa il mondo così com'è (i blocchi ancora in volo
+  tengono posizione, velocità e rotazione: niente salti) e il motore viene ricostruito da quella
+  foto. Annulla torna alla stessa foto, quindi Annulla + Genera con gli stessi valori dà lo stesso
+  identico risultato. Se nel frattempo sono cambiati attrattori o impostazioni, Annulla toglie solo
+  l'ultimo blocco e il resto continua da dov'è.
 - **Colori**: esistono solo `--carta` e `--inchiostro`. Tutto il sito e i poster li usano; gli
   export scrivono gli esadecimali esatti.
 

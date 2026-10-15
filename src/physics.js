@@ -161,7 +161,8 @@ export function createPhysics() {
   }
 
   return {
-    // Fresh engine: colliders first (attractor order), then elements (element order), all asleep.
+    // Fresh engine: colliders first (attractor order), then elements (element order). An element
+    // is frozen unless its state says it was moving (see states()): then it keeps its motion.
     rebuild({ attractors: atts, elements, settings: s }) {
       settings = { ...s };
       attractors = atts.map((a) => ({ ...a }));
@@ -178,7 +179,13 @@ export function createPhysics() {
       for (const el of elements) {
         const body = makeBody(el.polygon, el.x, el.y, el.angle);
         Composite.add(engine.world, body);
-        freeze(body);
+        if (el.moving) {
+          Body.setVelocity(body, { x: el.vx, y: el.vy });
+          Body.setAngularVelocity(body, el.w);
+          body.plugin.touchSteps = el.touchSteps;
+        } else {
+          freeze(body);
+        }
         elementBodies.set(el.id, body);
       }
     },
@@ -247,6 +254,19 @@ export function createPhysics() {
     poses() {
       const out = new Map();
       for (const [id, b] of elementBodies) out.set(id, { x: b.position.x, y: b.position.y, angle: b.angle });
+      return out;
+    },
+
+    // Full state of every element, moving ones included, so that a rebuild can carry on from
+    // exactly here instead of jumping to the resting positions.
+    states() {
+      const out = {};
+      for (const [id, b] of elementBodies) {
+        const v = Body.getVelocity(b);
+        out[id] = b.plugin.frozen
+          ? { x: b.position.x, y: b.position.y, angle: b.angle }
+          : { x: b.position.x, y: b.position.y, angle: b.angle, moving: true, vx: v.x, vy: v.y, w: Body.getAngularVelocity(b), touchSteps: b.plugin.touchSteps };
+      }
       return out;
     },
 

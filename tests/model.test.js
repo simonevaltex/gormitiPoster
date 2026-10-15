@@ -58,6 +58,30 @@ it('Genera while blocks are still falling is deterministic too', () => {
   expect(poseList(physics)).toEqual(first);
 });
 
+it('Genera never fast-forwards a block that is still falling: it keeps its place and speed', () => {
+  const { s, physics, model } = setup();
+  s.genera.params.testo.text = 'Sommo';
+  const { id } = model.generate();
+  for (let i = 0; i < 20; i++) physics.step();
+  const before = physics.poses().get(id);
+  physics.step();
+  const stepped = physics.poses().get(id);
+  const fall = stepped.y - before.y;
+  expect(fall).toBeGreaterThan(0.1); // really in flight
+
+  // Same 20 steps, then a second Genera, then one step: the first block moves on exactly as before.
+  const b = setup();
+  b.s.genera.params.testo.text = 'Sommo';
+  const first = b.model.generate().id;
+  for (let i = 0; i < 20; i++) b.physics.step();
+  b.s.genera.type = 'stemma';
+  b.s.spawn = { x: 40, y: 40, tilt: 0 };
+  b.model.generate();
+  expect(b.physics.poses().get(first)).toEqual(before);
+  b.physics.step();
+  expect(b.physics.poses().get(first).y - before.y).toBeCloseTo(fall, 6);
+});
+
 it('Annulla restores the previous poses exactly and keeps the form values', () => {
   const { s, physics, model } = setup();
   s.genera.params.testo.text = 'Sommo';
