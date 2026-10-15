@@ -105,7 +105,7 @@ function gravitySection({ store, model, tools }) {
     solid.set(s.settings.solidAttractors);
   });
   refresh();
-  return section('Gravità', h('div', { class: 'add-buttons' }, addPoint, addLine), selected, hint, restitution.field, friction.field, solid.field);
+  return section('Gravità', h('div', { class: 'segmented' }, addPoint, addLine), selected, hint, restitution.field, friction.field, solid.field);
 }
 
 // Fields of each element type; every change writes straight into state.genera.params[type].

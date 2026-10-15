@@ -747,19 +747,6 @@ input[type='color']::-moz-color-swatch {
   padding: 4px 16px 20px;
 }
 
-.add-buttons {
-  display: grid;
-  gap: 8px;
-  padding: 0 8%;
-  margin-bottom: 10px;
-}
-
-.add-buttons button {
-  padding: 13px 12px;
-  font-size: 16px;
-  font-weight: 400;
-}
-
 .selected {
   padding: 12px;
   border: 1px dashed var(--inchiostro);
