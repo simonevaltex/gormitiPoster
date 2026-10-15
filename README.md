@@ -1,7 +1,7 @@
 # Gormiti Poster Generator
 
 Strumento web per comporre poster tipografici A3 a due colori dedicati ai Gormiti. Ogni blocco
-(Popolo, Stemma, Gormita, Testo, Numero) cade dentro un campo gravitazionale disegnato sul foglio
+(Popolo, Stemma, Gormita, Nome, Alias, Numero) cade dentro un campo gravitazionale disegnato sul foglio
 con punti e segmenti: il look resta lo stesso, la composizione cambia ogni volta.
 
 ## Avvio
@@ -60,7 +60,7 @@ output `dist`). Non servono variabili d'ambiente né backend.
 L'archivio salva la "ricetta" del poster, non il PDF: id, numero, data, colori, bleed,
 impostazioni, attrattori, elementi (tipo, parametri, x, y, angolo finale) e una miniatura SVG
 senza guide. Un poster si può salvare o esportare solo quando sul foglio c'è almeno un blocco di
-ogni tipo (Popolo, Stemma, Gormita, Testo, Numero); altrimenti un messaggio dice cosa manca.
+ogni tipo (Popolo, Stemma, Gormita, Nome, Alias, Numero); altrimenti un messaggio dice cosa manca.
 **Salva in archivio** (icona segnalibro) aggiunge sempre un nuovo poster con numero = massimo + 1 (i doppioni
 sono ammessi); il badge Numero mostra lo stesso numero.
 
@@ -84,7 +84,7 @@ remove(id)    // → Promise<void>
   bleed: 3,
   settings: { restitution: 0.05, friction: 0.8, solidAttractors: true },
   attractors: [{ id, type: 'point', x, y, strength } | { id, type: 'segment', x1, y1, x2, y2, strength }],
-  elements: [{ id, type: 'popolo' | 'stemma' | 'gormita' | 'testo' | 'numero', params: {…}, x, y, angle }],
+  elements: [{ id, type: 'popolo' | 'stemma' | 'gormita' | 'nome' | 'testo' (Alias) | 'numero', params: {…}, x, y, angle }],
   thumbnail: '<svg …>…</svg>'   // usa le classi colore del sito, quindi segue la palette corrente
 }
 // PosterSummary = Recipe senza attractors ed elements.
@@ -117,7 +117,7 @@ src/state.js         stato unico dell'app
 src/model.js         azioni senza DOM: Genera, Annulla, Svuota, attrattori, ricette
 src/physics.js       mondo Matter, campo gravitazionale, orientamento
 src/field.js         matematica del campo (pura)
-src/elements/        un modulo per tipo: popolo, stemma, gormita, testo, numero
+src/elements/        un modulo per tipo: popolo, stemma, gormita, testo (Nome e Alias), numero
 src/text.js          opentype: misura e tracciati
 src/sheet-view.js    il foglio SVG, zoom e pan
 src/attractors.js    attrattori: guide e strumenti sul foglio
