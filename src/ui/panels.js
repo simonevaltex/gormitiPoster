@@ -3,6 +3,7 @@
 import { A3, DEFAULTS, DEFAULT_SETTINGS } from '../constants.js';
 import { POPOLI } from '../popoli.js';
 import { createPad } from '../pad.js';
+import { ELEMENT_TYPES } from '../elements/index.js';
 import { randomPoint, randomSegment } from '../attractors.js';
 import { h, numberField, rangeField, segmented, selectField, checkboxField } from './dom.js';
 import { confirmButton } from './inline-confirm.js';
@@ -129,21 +130,14 @@ function typeFields(type, store, model) {
         rangeField({ label: 'Larghezza', unit: 'mm', value: p.width, min: 20, max: 600, step: 1, onChange: set('width') }).field,
       ];
     }
+    case 'nome':
     case 'testo': {
-      const text = h('textarea', { rows: 3, value: p.text, autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Testo' });
+      const label = type === 'nome' ? 'Nome' : 'Alias';
+      const text = h('textarea', { rows: 3, value: p.text, autocomplete: 'off', spellcheck: 'false', 'aria-label': label });
       text.addEventListener('input', () => (p.text = text.value));
       return [
-        h('label', { class: 'field' }, h('span', { class: 'label' }, 'Testo (Invio = nuova riga)'), text),
+        h('label', { class: 'field' }, h('span', { class: 'label' }, `${label} (Invio = nuova riga)`), text),
         rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
-        segmented({
-          label: 'Stile',
-          options: [
-            { value: 'ink', label: 'Inchiostro' },
-            { value: 'outline', label: 'Contorno' },
-          ],
-          value: p.style,
-          onChange: set('style'),
-        }).field,
       ];
     }
     case 'numero': {
@@ -151,7 +145,7 @@ function typeFields(type, store, model) {
       const refresh = () => (readout.textContent = `Numero ${pad3(model.displayNumber())} · assegnato in automatico`);
       store.subscribe((t) => ['archive', 'poster', 'load'].includes(t) && refresh());
       refresh();
-      return [numberField({ label: 'Diametro', unit: 'mm', value: p.diameter, min: 10, max: 200, step: 0.5, onChange: set('diameter') }).field, readout];
+      return [rangeField({ label: 'Diametro', unit: 'mm', value: p.diameter, min: 10, max: 200, step: 0.5, onChange: set('diameter') }).field, readout];
     }
     default:
       return [];
@@ -161,17 +155,11 @@ function typeFields(type, store, model) {
 function generaSection({ store, model }) {
   const s = store.state;
   const groups = Object.fromEntries(
-    ['popolo', 'stemma', 'gormita', 'testo', 'numero'].map((type) => [type, h('div', { class: 'stack' }, typeFields(type, store, model))]),
+    Object.keys(ELEMENT_TYPES).map((type) => [type, h('div', { class: 'stack' }, typeFields(type, store, model))]),
   );
   const type = segmented({
     label: 'Tipo',
-    options: [
-      { value: 'popolo', label: 'Popolo' },
-      { value: 'stemma', label: 'Stemma' },
-      { value: 'gormita', label: 'Gormita' },
-      { value: 'testo', label: 'Testo' },
-      { value: 'numero', label: 'Numero' },
-    ],
+    options: Object.entries(ELEMENT_TYPES).map(([value, t]) => ({ value, label: t.label })),
     value: s.genera.type,
     compact: true,
     onChange: (v) => {

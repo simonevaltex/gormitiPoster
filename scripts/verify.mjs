@@ -161,7 +161,7 @@ const exportFile = async (name, { format = 'PDF vettoriale', marks = false } = {
 
 // Save and export need one block of every type: adds the missing ones, each from its own start.
 const completeSheet = async () => {
-  const starts = { Popolo: [60, 60], Stemma: [250, 50], Gormita: [148.5, 120], Testo: [148.5, 200], Numero: [250, 120] };
+  const starts = { Popolo: [60, 60], Stemma: [250, 50], Gormita: [148.5, 120], Nome: [148.5, 250], Alias: [148.5, 200], Numero: [250, 120] };
   for (const label of await page.evaluate(() => window.__gormiti.model.missingTypes())) {
     await page.getByRole('radio', { name: label }).click();
     await setSpawn(...starts[label]);
@@ -176,7 +176,7 @@ await ready();
 // 2 — default sheet, "Sommo Luminescente" falls from the pad point and rests on the segment, upright
 const initial = await state('s => s.attractors');
 const seg = initial[0];
-await page.getByLabel('Testo', { exact: true }).fill('Sommo Luminescente');
+await page.getByLabel('Alias', { exact: true }).fill('Sommo Luminescente');
 await page.getByLabel('Altezza maiuscole (valore)').filter({ visible: true }).fill('22');
 const pad = page.locator('svg.pad');
 const padBox = await pad.boundingBox();
@@ -218,14 +218,14 @@ await clearSheet();
 await deleteAllAttractors();
 await addPoint(148.5, 210);
 const blocks = [
-  ['Testo', [148.5, 30]],
+  ['Alias', [148.5, 30]],
   ['Stemma', [280, 210]],
   ['Popolo', [148.5, 400]],
-  ['Testo', [15, 210]],
+  ['Alias', [15, 210]],
   ['Numero', [270, 60]],
   ['Stemma', [30, 380]],
 ];
-await page.getByLabel('Testo', { exact: true }).fill('Gorgo');
+await page.getByLabel('Alias', { exact: true }).fill('Gorgo');
 for (const [type, [x, y]] of blocks) {
   await page.getByRole('radio', { name: type }).click();
   await setSpawn(x, y);
@@ -314,8 +314,8 @@ const size3 = await paperSize();
 await clearSheet();
 await deleteAllAttractors();
 await addSegment({ x: 20, y: 422.5 }, { x: 277, y: 422.5 }); // inside the bleed band
-await page.getByRole('radio', { name: 'Testo' }).click();
-await page.getByLabel('Testo', { exact: true }).fill('Bleed');
+await page.getByRole('radio', { name: 'Alias' }).click();
+await page.getByLabel('Alias', { exact: true }).fill('Bleed');
 await setSpawn(148.5, 300);
 await generate();
 await settled();
@@ -390,7 +390,7 @@ await page.getByRole('radio', { name: 'Numero' }).click();
 await setSpawn(240, 40);
 await generate();
 await settled();
-await button('Salva in archivio').click(); // Popolo, Stemma and Testo are missing: refused
+await button('Salva in archivio').click(); // Popolo, Stemma, Nome and Alias are missing: refused
 const refusal = (await page.locator('#status').textContent()).trim();
 const refusedCount = await state('s => s.archive.items.length');
 await completeSheet();
@@ -415,7 +415,7 @@ check(
   'si salva solo con tutti i tipi; compare in archivio con numero progressivo, si riapre identico e resta dopo il ricaricamento',
   rowNumber === 'N° 001' &&
     refusedCount === 0 &&
-    refusal === 'Per salvare mancano: Popolo, Stemma, Testo' &&
+    refusal === 'Per salvare mancano: Popolo, Stemma, Nome, Alias' &&
     afterReload === 1 &&
     JSON.stringify(reopened) === JSON.stringify(saved) &&
     restoredColours.carta === carta &&

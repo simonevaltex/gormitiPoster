@@ -13,7 +13,7 @@ beforeAll(async () => {
 const ctx = (posterNumber = 7) => ({ fonts, paint: screenPaint, posterNumber });
 
 it('has the five types and the seven popoli', () => {
-  expect(Object.keys(ELEMENT_TYPES).sort()).toEqual(['gormita', 'numero', 'popolo', 'stemma', 'testo']);
+  expect(Object.keys(ELEMENT_TYPES)).toEqual(['popolo', 'stemma', 'gormita', 'nome', 'testo', 'numero']);
   expect(POPOLI.map((p) => p.article)).toEqual(['dell’', 'della', 'della', 'del', 'delle', 'della', 'del']);
 });
 
@@ -54,23 +54,25 @@ it('default sizes: stemma Ø20, numero Ø22, gormita 180 wide', () => {
   expect(buildElement('gormita', p.gormita, ctx()).bounds.width).toBeCloseTo(180, 0);
 });
 
-it('testo: the outline style grows the glyph box by the 0.5 mm stroke', () => {
-  const base = { ...defaultParams().testo, text: 'Sommo' };
-  const plain = buildElement('testo', { ...base, style: 'ink' }, ctx()).bounds;
-  const outlined = buildElement('testo', { ...base, style: 'outline' }, ctx()).bounds;
-  expect(outlined.width).toBeCloseTo(plain.width + 1, 5);
-  expect(outlined.height).toBeCloseTo(plain.height + 1, 5);
+it('nome is outlined (0.5 mm ink), alias is solid ink', () => {
+  const p = { text: 'Sommo', weight: 'regular', capHeight: 30 };
+  const alias = buildElement('testo', p, ctx());
+  const nome = buildElement('nome', p, ctx());
+  expect(nome.bounds.width).toBeCloseTo(alias.bounds.width + 1, 5);
+  expect(nome.bounds.height).toBeCloseTo(alias.bounds.height + 1, 5);
+  expect(alias.markup).not.toContain('stroke');
+  expect(nome.markup).toContain('stroke');
 });
 
-it('testo: old recipes with a paper fill open as outline', () => {
-  const base = { ...defaultParams().testo, text: 'Sommo' };
-  delete base.style;
-  const old = buildElement('testo', { ...base, fill: 'paper', stroke: 'ink', strokeWidth: 0.8 }, ctx());
-  expect(old.markup).toEqual(buildElement('testo', { ...base, style: 'outline' }, ctx()).markup);
+it('old text recipes keep their style: outline or paper fill stays outlined', () => {
+  const p = { text: 'Sommo', weight: 'regular', capHeight: 30 };
+  const nome = buildElement('nome', p, ctx()).markup;
+  expect(buildElement('testo', { ...p, style: 'outline' }, ctx()).markup).toEqual(nome);
+  expect(buildElement('testo', { ...p, fill: 'paper', stroke: 'ink', strokeWidth: 0.8 }, ctx()).markup).toEqual(nome);
 });
 
 it('testo: cap height drives the size', () => {
-  const p = { ...defaultParams().testo, text: 'H', style: 'ink' };
+  const p = { ...defaultParams().testo, text: 'H' };
   expect(buildElement('testo', { ...p, capHeight: 40 }, ctx()).bounds.height).toBeCloseTo(40, 1);
 });
 

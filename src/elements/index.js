@@ -1,13 +1,14 @@
 import popolo from './popolo.js';
 import stemma from './stemma.js';
 import gormita from './gormita.js';
-import testo from './testo.js';
+import testo, { nome } from './testo.js';
 import numero from './numero.js';
 import { polygonCentroid } from '../geometry.js';
 
 // Every builder returns { markup, collisionPolygon, bounds } in the same local coordinates, so
 // phase 2 only needs to swap the source of the markup and outline.
-export const ELEMENT_TYPES = { popolo, stemma, gormita, testo, numero };
+// The order is the order of the Tipo buttons (and of the "missing" message).
+export const ELEMENT_TYPES = { popolo, stemma, gormita, nome, testo, numero };
 
 export const defaultParams = () =>
   Object.fromEntries(Object.entries(ELEMENT_TYPES).map(([key, t]) => [key, structuredClone(t.defaults)]));
