@@ -6,7 +6,43 @@
     <title>Gormiti · Poster</title>
   </head>
   <body>
-    <div id="app">Caricamento…</div>
+    <header class="topbar">
+      <h1 class="brand">Gormiti <span>Poster</span></h1>
+      <div class="colors">
+        <label class="swatch">
+          <span class="label">Carta</span>
+          <input type="color" id="carta" value="#ffffff" />
+          <output class="mono" id="carta-hex">#FFFFFF</output>
+        </label>
+        <label class="swatch">
+          <span class="label">Inchiostro</span>
+          <input type="color" id="inchiostro" value="#000000" />
+          <output class="mono" id="inchiostro-hex">#000000</output>
+        </label>
+        <p id="color-warning" class="warning" role="alert" hidden>Carta e inchiostro devono essere diversi</p>
+      </div>
+      <nav class="actions" aria-label="Azioni">
+        <button id="save" type="button">Salva poster</button>
+        <button id="open-archive" type="button" aria-expanded="false" aria-controls="archive">Archivio</button>
+        <button id="open-export" type="button">Esporta</button>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <aside id="panel" class="panel" aria-label="Controlli"></aside>
+      <section id="stage" class="stage" aria-label="Foglio">
+        <svg id="sheet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Foglio A3"></svg>
+        <div class="stage-tools">
+          <button id="fit" type="button">Adatta</button>
+          <span id="zoom" class="mono">100%</span>
+        </div>
+        <p id="status" class="status" role="status" hidden></p>
+      </section>
+      <aside id="archive" class="archive" aria-label="Archivio" hidden></aside>
+    </main>
+
+    <div id="export-modal" class="modal" hidden></div>
+    <div id="loading" class="loading">Caricamento font…</div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

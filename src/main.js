@@ -1,1 +1,71 @@
-document.getElementById('app').textContent = 'Gormiti · Poster';
+import './ui/style.css';
+import { loadFonts } from './fonts.js';
+import { createStore } from './state.js';
+import { createPhysics } from './physics.js';
+import { createModel } from './model.js';
+import { createSheetView } from './sheet-view.js';
+import { createHeader, loadStoredColors } from './ui/header.js';
+import { showStatus } from './ui/status.js';
+import { STEP_MS } from './constants.js';
+
+const fonts = await loadFonts((file) =>
+  fetch(`${import.meta.env.BASE_URL}fonts/${file}`).then((r) => {
+    if (!r.ok) throw new Error(`Font mancante: ${file}`);
+    return r.arrayBuffer();
+  }),
+);
+
+const store = createStore();
+const s = store.state;
+s.colors = loadStoredColors(s.colors);
+const physics = createPhysics();
+const model = createModel({ store, physics, fonts });
+
+const zoomLabel = document.getElementById('zoom');
+const view = createSheetView(document.getElementById('sheet'), store, {
+  onZoom: (percent) => (zoomLabel.textContent = `${percent}%`),
+});
+document.getElementById('fit').addEventListener('click', () => view.fit());
+
+createHeader({
+  store,
+  onSave: () => showStatus('Archivio in arrivo'),
+  onToggleArchive: () => showStatus('Archivio in arrivo'),
+  onExport: () => showStatus('Esportazione in arrivo'),
+});
+
+// Elements appear/disappear and jump to their pose whenever the model rebuilds the world.
+store.subscribe((topic) => {
+  if (topic === 'elements' || topic === 'load') {
+    view.syncElements();
+    view.updatePoses(physics.poses());
+  }
+});
+
+model.reset();
+
+// Fixed-step loop with an accumulator: the simulation never sees a variable delta.
+let last = performance.now();
+let acc = 0;
+function frame(now) {
+  acc += Math.min(now - last, 100);
+  last = now;
+  if (physics.isSettled()) {
+    acc = 0; // nothing moves: don't bank time for a burst later
+  } else {
+    let steps = 0;
+    while (acc >= STEP_MS && steps < 5) {
+      physics.step();
+      acc -= STEP_MS;
+      steps++;
+    }
+    if (steps === 5) acc = 0;
+    if (steps) view.updatePoses(physics.poses());
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+document.getElementById('loading').remove();
+
+if (import.meta.env.DEV) window.__gormiti = { store, physics, model, view, ready: true };
