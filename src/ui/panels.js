@@ -76,7 +76,6 @@ function gravitySection({ store, model, tools }) {
     'Elimina',
   );
   const selected = h('div', { class: 'stack selected' }, readout, strength.field, h('div', { class: 'row' }, remove, h('span', { class: 'hint' }, 'oppure tasto Canc')));
-  const hint = h('p', { class: 'hint' }, 'Clicca un attrattore (qui sopra o sul foglio) per selezionarlo, trascinalo per spostarlo.');
 
   const restitution = rangeField({ label: 'Rimbalzo', value: s.settings.restitution, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ restitution: v }) });
   const friction = rangeField({ label: 'Attrito', value: s.settings.friction, min: 0, max: 1, step: 0.01, onChange: (v) => model.setSettings({ friction: v }) });
@@ -89,7 +88,6 @@ function gravitySection({ store, model, tools }) {
   function refresh() {
     const a = s.attractors.find((x) => x.id === s.selectedId);
     selected.hidden = !a;
-    hint.hidden = !!a;
     if (!a) return;
     readout.textContent =
       a.type === 'point'
@@ -105,7 +103,7 @@ function gravitySection({ store, model, tools }) {
     solid.set(s.settings.solidAttractors);
   });
   refresh();
-  return section('Gravità', h('div', { class: 'segmented' }, addPoint, addLine), selected, hint, restitution.field, friction.field, solid.field);
+  return section('Gravità', h('div', { class: 'segmented' }, addPoint, addLine), selected, restitution.field, friction.field, solid.field);
 }
 
 // Fields of each element type; every change writes straight into state.genera.params[type].
