@@ -3,9 +3,10 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseFigureSvg } from '../src/svg-figure.js';
+import { parseFigureSvg, buildFigure, FIGURE_PAPER_MM } from '../src/svg-figure.js';
+import { OUTLINE_MM } from '../src/constants.js';
 import { buildElement } from '../src/elements/index.js';
-import { POPOLO_WORD_SCALE } from '../src/elements/popolo.js';
+import { POPOLO_WORD_SCALE, popoloLayout } from '../src/elements/popolo.js';
 import { layoutText } from '../src/text.js';
 import { scanAssets } from '../scripts/assets-manifest.mjs';
 import { loadAssets } from '../src/figures.js';
@@ -33,25 +34,30 @@ it('popoli SVGs are listed by popolo, taken from the file name', () => {
   ]);
 });
 
-it("Popolo with Simone's word: «Popolo» and the article in Geist, then the word at the common scale, just overlapping", () => {
+it("Popolo with Simone's word: only «Popolo» in Geist, then the word with the figures' paper band and outline, 30 mm in all", () => {
   const word = { popolo: 'luce', file: 'popoli/popoloLuce.svg', ...parseFigureSvg(WORD) };
-  const c = 30;
   const ctx = { fonts, paint: screenPaint, popoli: new Map([['luce', word]]) };
-  const el = buildElement('popolo', { popolo: 'luce', capHeight: c }, ctx);
-  const s = POPOLO_WORD_SCALE * c;
-  expect(POPOLO_WORD_SCALE).toBeCloseTo(1.05 / 70, 10);
-  expect(el.markup).toContain(`scale(${s})`);
-  const head = layoutText(fonts.regular, 'Popolo\ndella', { capHeight: c, lineHeight: 0.82, tracking: -0.02 });
-  expect(el.markup).toContain(head.lines[0].d);
-  // The word: as wide as 150 units at that scale, its top a little above the article's baseline.
-  expect(el.bounds.width).toBeCloseTo(Math.max(150 * s, head.bbox.x2 - head.bbox.x1), 6);
-  expect(el.bounds.y + el.bounds.height).toBeCloseTo(0.82 * head.fontSize - 0.06 * c + 80 * s, 6);
+  const el = buildElement('popolo', { popolo: 'luce', height: 30 }, ctx);
+  expect(el.bounds.height).toBeCloseTo(30, 6);
+  const { c, s } = popoloLayout(word, 30, fonts);
+  expect(s).toBeCloseTo(POPOLO_WORD_SCALE * c, 12);
+  // «Popolo» alone, no article.
+  const head = layoutText(fonts.regular, 'Popolo', { capHeight: c, tracking: -0.02 });
+  expect(el.markup).toContain(`<path d="${head.lines[0].d}" class="fi"/>`);
+  // The word drawn like a figure: rings of FIGURE_PAPER_MM and OUTLINE_MM, the same in mm at any size.
+  const OUTER = FIGURE_PAPER_MM + OUTLINE_MM;
+  expect(el.markup).toContain(buildFigure(word, 150 * s + 2 * OUTER, { paint: screenPaint }).markup);
+  expect(el.bounds.width).toBeCloseTo(Math.max(150 * s + 2 * OUTER, head.bbox.x2 - head.bbox.x1), 6);
+  expect(buildElement('popolo', { popolo: 'luce', height: 60 }, ctx).bounds.height).toBeCloseTo(60, 6);
   expect(convexHull(el.collisionPolygon)).toHaveLength(el.collisionPolygon.length);
   expect(pointInPolygon(el.centre, el.collisionPolygon)).toBe(true);
-  expect(el.markup).not.toContain('stroke'); // the file has its own outline and shadow
-  // A popolo without its file keeps the placeholder lettering.
-  const aria = buildElement('popolo', { popolo: 'aria', capHeight: c }, ctx);
-  expect(aria.markup).toEqual(buildElement('popolo', { popolo: 'aria', capHeight: c }, { fonts, paint: screenPaint }).markup);
+});
+
+it('without its file a popolo keeps the placeholder sticker, also «Popolo» alone and 30 mm in all', () => {
+  const el = buildElement('popolo', { popolo: 'aria', height: 30 }, { fonts, paint: screenPaint });
+  expect(el.bounds.height).toBeCloseTo(30, 6);
+  // Posters saved before keep their popolo but take the new size (capHeight is not read any more).
+  expect(buildElement('popolo', { popolo: 'aria', capHeight: 22 }, { fonts, paint: screenPaint }).bounds.height).toBeCloseTo(30, 6);
 });
 
 it("Simone's seven popoli load, one per popolo", async () => {

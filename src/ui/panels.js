@@ -131,7 +131,7 @@ function typeFields(type, store, model, figures) {
     case 'popolo':
       return [
         ...popoloField(),
-        rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 200, step: 0.5, onChange: set('capHeight') }).field,
+        rangeField({ label: 'Altezza', unit: 'mm', value: p.height, min: 10, max: 300, step: 0.5, onChange: set('height') }).field,
       ];
     case 'stemma':
       return [

@@ -208,14 +208,16 @@ simbolo segnaposto.
 
 Le parole dei popoli sono gli SVG in `public/assets/popoli/`, una per popolo; il popolo si ricava
 dal nome del file (`popoloAria.svg`, `popolo-aria.svg` o `aria.svg` → Aria). Il file contiene solo
-la parola dell'elemento, già con le sue lettere, il contorno e l'ombra: il sito non aggiunge
-contorni. «Popolo» e l'articolo («dell'», «della»…) li scrive il sito in Geist Regular, e la parola
-va sotto, appena sovrapposta all'articolo.
+la parola dell'elemento, con le sue lettere e la sua ombra. Il sito scrive sopra «Popolo» in Geist
+Regular (senza articolo) e attorno alla parola disegna gli stessi contorni delle figure: 2 mm di
+carta e la linea d'inchiostro da 0,5 mm, spessi uguale a ogni misura.
 
-L'**Altezza maiuscole** del tipo Popolo è quella di «Popolo». Le parole usano tutte la stessa scala
-(`POPOLO_WORD_SCALE` in `src/elements/popolo.js`: 70 unità del file = 1,05 × l'altezza maiuscole),
-così tengono tra loro le proporzioni con cui sono disegnate: conviene disegnarle tutte sulla stessa
-tavola, alla stessa scala. Un popolo senza file usa il lettering segnaposto.
+L'**Altezza** del tipo Popolo (30 mm di partenza) è quella di tutto il blocco, da «Popolo» al
+contorno della parola. Le parole usano tutte la stessa scala rispetto a «Popolo»
+(`POPOLO_WORD_SCALE` in `src/elements/popolo.js`), così tengono tra loro le proporzioni con cui sono
+disegnate: conviene disegnarle sulla stessa tavola, alla stessa scala. Una parola più alta (Tenebre,
+con le punte) rende «Popolo» un po' più piccolo. Un popolo senza file usa il lettering segnaposto. I
+poster salvati prima riaprono il Popolo con il nuovo aspetto, alto 30 mm.
 
 ## Numero (SVG)
 
