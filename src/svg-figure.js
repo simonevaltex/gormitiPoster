@@ -540,9 +540,9 @@ export function fitNumber(font, label, box) {
 
 // Simone's badge and the poster number in the "numero" box, in the box's colour. Around the whole
 // drawing, white parts included, the site draws the ink outline of Nome and the figures (the file
-// has its own paper band). Size and collisions follow its ink part, centred on (0, 0),
-// the larger side exactly `diameter`; paper flourishes around it are decoration that may lie over
-// other blocks. The collision shape doesn't depend on the number.
+// has its own paper band). The size follows its ink part, centred on (0, 0), the larger side
+// exactly `diameter`; collisions take the whole drawing, flourishes and outline included (convex
+// hull, like the figures), so two badges never cross. It doesn't depend on the number.
 export function buildNumeroFigure(figure, diameter, label, { fonts, paint, detail }) {
   const core = figure.ink ?? figure;
   const s = diameter / Math.max(core.bounds.width, core.bounds.height);
@@ -557,6 +557,7 @@ export function buildNumeroFigure(figure, diameter, label, { fonts, paint, detai
   const markup =
     `<g transform="translate(${fmt(-cx * s)} ${fmt(-cy * s)}) scale(${s})">${line}${drawingMarkup(figure, s, paint, detail)}</g>` +
     `<path d="${number.d}" ${paint({ fill: figure.slot.paint })}/>`;
-  const outer = core.hull.map((p) => ({ x: (p.x - cx) * s, y: (p.y - cy) * s }));
+  const disc = regularPolygon(OUTLINE_MM, 12);
+  const outer = convexHull(figure.hull.flatMap((p) => disc.map((q) => ({ x: (p.x - cx) * s + q.x, y: (p.y - cy) * s + q.y }))));
   return { markup, collisionPolygon: simplifyPolygon(outer, 0.02, 40), bounds: boundsOf(outer) };
 }

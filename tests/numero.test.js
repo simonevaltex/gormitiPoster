@@ -53,7 +53,7 @@ it("numero from Simone's SVG: as wide as the Diametro, the poster number in its 
   const ctx = (posterNumber) => ({ fonts, paint: screenPaint, posterNumber, numero });
   const a = buildElement('numero', { diameter: 30 }, ctx(7));
   const b = buildElement('numero', { diameter: 30 }, ctx(12));
-  expect(a.bounds.width).toBeCloseTo(30, 6);
+  expect(a.bounds.width).toBeCloseTo(30 + 2 * OUTLINE_MM, 1); // the disc and its outline
   expect(a.markup).toContain('scale(0.5)');
   expect(a.markup).toContain(fitNumber(fonts.mono, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
   expect(a.markup).not.toEqual(b.markup);
@@ -65,17 +65,17 @@ it("numero from Simone's SVG: as wide as the Diametro, the poster number in its 
   expect(exported.markup).not.toContain('class=');
 });
 
-it('Diametro and collisions follow the black badge: a white flourish around it is decoration', () => {
+it('Diametro measures the black badge; collisions take the whole drawing, flourish and outline included', () => {
   // The black disc of BADGE (60 wide) and a long white flourish reaching far up and left.
   const flourished = BADGE.replace('<circle cx="30"', '<path class="st0" d="M-90,-120L35,5L5,35Z"/><circle cx="30"');
   const numero = { file: 'numero/numero.svg', ...parseFigureSvg(flourished, { slot: 'numero' }) };
-  const plain = { file: 'numero/numero.svg', ...parseFigureSvg(BADGE, { slot: 'numero' }) };
-  const ctx = (n) => ({ fonts, paint: screenPaint, posterNumber: 7, numero: n });
-  const a = buildElement('numero', { diameter: 30 }, ctx(numero));
-  const b = buildElement('numero', { diameter: 30 }, ctx(plain));
-  expect(a.bounds).toEqual(b.bounds);
-  expect(a.collisionPolygon).toEqual(b.collisionPolygon);
+  const a = buildElement('numero', { diameter: 30 }, { fonts, paint: screenPaint, posterNumber: 7, numero });
+  expect(a.markup).toContain('scale(0.5)'); // the black disc is 30 mm
   expect(a.markup).toContain(fitNumber(fonts.mono, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
+  // 150 × 180 drawing units → 75 × 90 mm, plus the outline on each side.
+  expect(a.bounds.width).toBeCloseTo(75 + 2 * OUTLINE_MM, 1);
+  expect(a.bounds.height).toBeCloseTo(90 + 2 * OUTLINE_MM, 1);
+  expect(pointInPolygon({ x: -50, y: -60 }, a.collisionPolygon)).toBe(true); // on the flourish
 });
 
 it('an ink line as thick as Nome\'s goes around the whole badge, white flourish included, under the drawing', () => {
