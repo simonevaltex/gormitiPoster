@@ -10,7 +10,7 @@ import { showStatus } from './ui/status.js';
 export const nextPosterNumber = (items) => items.reduce((max, p) => Math.max(max, p.number || 0), 0) + 1;
 export const pad3 = (n) => String(n).padStart(3, '0');
 
-export function createArchive({ store, model, fonts, figures, stemmi, numero, root, tabs, onExport }) {
+export function createArchive({ store, model, fonts, figures, stemmi, numero, popoli, root, tabs, onExport }) {
   const s = store.state;
   const list = h('ol', { class: 'archive-list' });
   root.append(h('h2', { class: 'visually-hidden' }, 'Archivio'), list);
@@ -42,7 +42,7 @@ export function createArchive({ store, model, fonts, figures, stemmi, numero, ro
     const number = s.archive.nextNumber;
     const id = `p${Date.now().toString(36)}`;
     const recipe = model.toRecipe({ id, number, date: new Date().toISOString() });
-    const thumbnail = composeSheetSvg(recipe, { fonts, figures, stemmi, numero, paint: screenPaint, idPrefix: `thumb-${id}`, detail: 'thumbnail' });
+    const thumbnail = composeSheetSvg(recipe, { fonts, figures, stemmi, numero, popoli, paint: screenPaint, idPrefix: `thumb-${id}`, detail: 'thumbnail' });
     recipe.thumbnail = lightenSvg(thumbnail.svg);
     try {
       await storage.save(recipe);

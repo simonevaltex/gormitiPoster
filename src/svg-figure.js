@@ -477,7 +477,7 @@ export function buildFigure(figure, width, { paint, detail }) {
 
 // The drawing at scale s, shapes in order; consecutive shapes with the same paint share a group.
 // Thumbnails skip the specks and simplify the outlines.
-function drawingMarkup(figure, s, paint, detail) {
+export function drawingMarkup(figure, s, paint, detail) {
   const thumbnail = detail === 'thumbnail';
   const minSize = thumbnail ? THUMBNAIL_MIN_MM / s : 0;
   const tolerance = (thumbnail ? THUMBNAIL_TOLERANCE_MM : RING_TOLERANCE_MM) / s;

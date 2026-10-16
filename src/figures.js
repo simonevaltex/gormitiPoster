@@ -1,5 +1,5 @@
 // Loads Simone's artwork listed in assets/manifest.json: the Gormiti figures (id → figure) and the
-// crests (popolo → figure), and the Numero badge. read(path) → Promise<string>, with paths relative to assets/ (fetch in
+// crests and the popoli words (popolo → figure), and the Numero badge. read(path) → Promise<string>, with paths relative to assets/ (fetch in
 // the browser, the disk in tests). A file that can't be read or drawn is skipped with a warning:
 // one broken SVG never stops the app.
 import { parseFigureSvg } from './svg-figure.js';
@@ -25,14 +25,15 @@ export async function loadAssets(read) {
   try {
     manifest = JSON.parse(await read('manifest.json'));
   } catch {
-    return { figures: new Map(), stemmi: new Map(), numero: null };
+    return { figures: new Map(), stemmi: new Map(), numero: null, popoli: new Map() };
   }
-  const [figures, stemmi, numero] = await Promise.all([
+  const [figures, stemmi, numero, popoli] = await Promise.all([
     loadList(manifest.gormiti, read, 'id'),
     loadList(manifest.stemmi, read, 'popolo'),
     loadNumero(manifest.numero, read),
+    loadList(manifest.popoli, read, 'popolo'),
   ]);
-  return { figures, stemmi, numero };
+  return { figures, stemmi, numero, popoli };
 }
 
 // The Numero badge needs its "numero" box; without it the star placeholder stays.

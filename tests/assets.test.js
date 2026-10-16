@@ -35,8 +35,9 @@ it('the manifest lists the SVGs in assets/gormiti by name and ignores anything e
     ],
     stemmi: [],
     numero: null,
+    popoli: [],
   });
-  expect(scanAssets(join(dir, 'missing'))).toEqual({ gormiti: [], stemmi: [], numero: null });
+  expect(scanAssets(join(dir, 'missing'))).toEqual({ gormiti: [], stemmi: [], numero: null, popoli: [] });
 });
 
 it('each figure takes its Nome and Alias from gormiti/nomi.json, keyed by file name with or without .svg', () => {

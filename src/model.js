@@ -5,11 +5,11 @@ import { screenPaint } from './paint.js';
 import { DEFAULT_SEGMENT, DEFAULT_SETTINGS, PHYS } from './constants.js';
 import { RECIPE_VERSION } from './recipe.js';
 
-export function createModel({ store, physics, fonts, figures = new Map(), stemmi = new Map(), numero = null }) {
+export function createModel({ store, physics, fonts, figures = new Map(), stemmi = new Map(), numero = null, popoli = new Map() }) {
   const s = store.state;
 
   const displayNumber = () => s.poster.number ?? s.archive.nextNumber;
-  const ctx = () => ({ fonts, figures, stemmi, numero, paint: screenPaint, posterNumber: displayNumber() });
+  const ctx = () => ({ fonts, figures, stemmi, numero, popoli, paint: screenPaint, posterNumber: displayNumber() });
   const nextId = (prefix) => `${prefix}${++s.seq}`;
   // Anything that can thaw resting blocks: if it changed, an old snapshot no longer matches the sheet.
   const attractorsKey = () => JSON.stringify([s.attractors, s.settings]);

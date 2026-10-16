@@ -1,4 +1,4 @@
-// The list of Simone's artwork in public/assets (gormiti/, stemmi/, numero/), for the browser (which
+// The list of Simone's artwork in public/assets (gormiti/, stemmi/, numero/, popoli/), for the browser (which
 // can't list a folder).
 // In development it is served live at /assets/manifest.json, so a new SVG shows up on reload;
 // the build writes the same file into dist. The list itself needs no editing: drop the SVG in
@@ -69,7 +69,12 @@ export function scanAssets(assetsDir, warn = console.warn) {
       return { id, name: figureName(file), file: `gormiti/${file}`, ...(nome && { nome }), ...(alias && { alias }), ...(popolo && { popolo }) };
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'it'));
-  return { gormiti, stemmi: scanStemmi(join(assetsDir, 'stemmi')), numero: scanNumero(join(assetsDir, 'numero')) };
+  return {
+    gormiti,
+    stemmi: scanStemmi(join(assetsDir, 'stemmi')),
+    numero: scanNumero(join(assetsDir, 'numero')),
+    popoli: scanPopoli(join(assetsDir, 'popoli')),
+  };
 }
 
 // The badge of the Numero: one SVG in assets/numero, whatever its name (numero.svg if there are
@@ -86,6 +91,15 @@ export const stemmaPopolo = (file) =>
     .replace(/\.svg$/i, '')
     .replace(/^stemma[\s_-]*/i, '')
     .toLocaleLowerCase('it');
+
+// "popoloAria.svg", "popolo-aria.svg", "Aria.svg" → the popolo "aria": the element word of the
+// Popolo lettering.
+function scanPopoli(dir) {
+  return svgFiles(dir)
+    .map((file) => ({ popolo: file.replace(/\.svg$/i, '').replace(/^popolo[\s_-]*/i, '').toLocaleLowerCase('it'), file: `popoli/${file}` }))
+    .filter((p) => p.popolo)
+    .sort((a, b) => a.popolo.localeCompare(b.popolo, 'it'));
+}
 
 function scanStemmi(dir) {
   return svgFiles(dir)

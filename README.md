@@ -191,6 +191,7 @@ scripts/assets-manifest.mjs  elenco di figure (con nome, alias e popolo), stemmi
 public/assets/gormiti/       gli SVG delle figure e nomi.json
 public/assets/stemmi/        gli SVG degli stemmi, uno per popolo
 public/assets/numero/        l'SVG del badge del Numero
+public/assets/popoli/        le parole dei popoli, una per popolo
 ```
 
 ## Stemmi (SVG)
@@ -202,6 +203,19 @@ spazio carta e un'altra linea inchiostro, tutti da 0,5 mm come il contorno di No
 **Diametro** del tipo Stemma (20 mm di partenza) è quello esterno, anelli compresi. Come per le
 figure, i colori scuri diventano inchiostro e quelli chiari carta. Un popolo senza file usa il
 simbolo segnaposto.
+
+## Popoli (SVG)
+
+Le parole dei popoli sono gli SVG in `public/assets/popoli/`, una per popolo; il popolo si ricava
+dal nome del file (`popoloAria.svg`, `popolo-aria.svg` o `aria.svg` → Aria). Il file contiene solo
+la parola dell'elemento, già con le sue lettere, il contorno e l'ombra: il sito non aggiunge
+contorni. «Popolo» e l'articolo («dell'», «della»…) li scrive il sito in Geist Regular, e la parola
+va sotto, appena sovrapposta all'articolo.
+
+L'**Altezza maiuscole** del tipo Popolo è quella di «Popolo». Le parole usano tutte la stessa scala
+(`POPOLO_WORD_SCALE` in `src/elements/popolo.js`: 70 unità del file = 1,05 × l'altezza maiuscole),
+così tengono tra loro le proporzioni con cui sono disegnate: conviene disegnarle tutte sulla stessa
+tavola, alla stessa scala. Un popolo senza file usa il lettering segnaposto.
 
 ## Numero (SVG)
 
@@ -228,8 +242,6 @@ resta il badge a stella.
 - Gormiti: fatto (vedi «Figure dei Gormiti»).
 - Stemmi: fatto (vedi «Stemmi»).
 - Numero: fatto (vedi «Numero»).
-- Popoli: la cartella `public/assets/popoli/` esiste ma non viene ancora letta. Ogni elemento restituisce `{ markup, collisionPolygon, bounds }`, quindi basta cambiare la
-  sorgente (per il lettering del Popolo la funzione da sostituire è `popoloLettering` in
-  `src/elements/popolo.js`).
+- Popoli: fatto (vedi «Popoli»).
 - Archivio condiviso su Vercel: implementare `src/storage/api.js` (vedi sopra).
 - Eventuale conversione CMYK per la stampa.
