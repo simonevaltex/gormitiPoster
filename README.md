@@ -178,15 +178,26 @@ src/storage/         adattatore di salvataggio (local.js ora, api.js in futuro)
 src/export.js        PDF e SVG
 src/recipe.js        ricetta → SVG (export e miniature)
 src/ui/              header, pannelli, dialoghi, stile
-scripts/assets-manifest.mjs  elenco delle figure con nome e alias (servito in sviluppo, scritto nella build)
+scripts/assets-manifest.mjs  elenco di figure (con nome e alias) e stemmi (servito in sviluppo, scritto nella build)
 public/assets/gormiti/       gli SVG delle figure e nomi.json
+public/assets/stemmi/        gli SVG degli stemmi, uno per popolo
 ```
+
+## Stemmi (SVG)
+
+Gli stemmi sono gli SVG in `public/assets/stemmi/`, uno per popolo: il popolo si ricava dal nome del
+file (`stemmaAria.svg`, `stemma-aria.svg` o `aria.svg` → Aria). Il file contiene il disco carta e il
+simbolo; il doppio anello attorno lo disegna il sito, uguale per tutti: una linea inchiostro, uno
+spazio carta e un'altra linea inchiostro, tutti da 0,5 mm come il contorno di Nome e delle figure. Il
+**Diametro** del tipo Stemma (20 mm di partenza) è quello esterno, anelli compresi. Come per le
+figure, i colori scuri diventano inchiostro e quelli chiari carta. Un popolo senza file usa il
+simbolo segnaposto.
 
 ## Fase 2
 
 - Gormiti: fatto (vedi «Figure dei Gormiti»).
-- Popoli e stemmi: le cartelle `public/assets/popoli/` e `stemmi/` esistono ma non vengono ancora
-  lette. Ogni elemento restituisce `{ markup, collisionPolygon, bounds }`, quindi basta cambiare la
+- Stemmi: fatto (vedi «Stemmi»).
+- Popoli: la cartella `public/assets/popoli/` esiste ma non viene ancora letta. Ogni elemento restituisce `{ markup, collisionPolygon, bounds }`, quindi basta cambiare la
   sorgente (per il lettering del Popolo la funzione da sostituire è `popoloLettering` in
   `src/elements/popolo.js`).
 - Archivio condiviso su Vercel: implementare `src/storage/api.js` (vedi sopra).

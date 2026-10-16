@@ -120,3 +120,15 @@ it('gormita: a chosen figure comes from its SVG, otherwise the placeholder is dr
   expect(buildElement('gormita', { figure: 'sparito', name: 'Gormita', width: 180 }, c).markup).toEqual(placeholder.markup);
   expect(buildElement('gormita', { name: 'Gormita', width: 180 }, ctx()).markup).toEqual(placeholder.markup);
 });
+
+it("stemma from Simone's SVG: exact diameter, round collision, two 0.5 mm ink rings around the drawing", async () => {
+  const { parseFigureSvg, STEMMA_RINGS_MM } = await import('../src/svg-figure.js');
+  const disc = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="25" fill="#fff"/><rect x="20" y="10" width="10" height="30"/></svg>';
+  const stemmi = new Map([['aria', parseFigureSvg(disc)]]);
+  const built = buildElement('stemma', { popolo: 'aria', diameter: 20 }, { ...ctx(), stemmi });
+  expect(built.bounds.width).toBeCloseTo(20, 1);
+  expect(built.markup.match(/<circle r="[\d.]+" class="fn si" stroke-width="0.5"\/>/g)).toHaveLength(2);
+  expect(built.markup).toContain(`scale(${(20 - 2 * STEMMA_RINGS_MM) / 50})`);
+  // without the file: the placeholder
+  expect(buildElement('stemma', { popolo: 'mare', diameter: 20 }, { ...ctx(), stemmi }).markup).not.toContain('scale(');
+});

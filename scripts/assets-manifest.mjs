@@ -1,4 +1,5 @@
-// The list of Simone's artwork in public/assets, for the browser (which can't list a folder).
+// The list of Simone's artwork in public/assets (gormiti/ and stemmi/), for the browser (which
+// can't list a folder).
 // In development it is served live at /assets/manifest.json, so a new SVG shows up on reload;
 // the build writes the same file into dist. The list itself needs no editing: drop the SVG in
 // the folder. Only the Nome and Alias of each Gormita are written by hand, in gormiti/nomi.json.
@@ -60,7 +61,21 @@ export function scanAssets(assetsDir, warn = console.warn) {
       return { id, name: figureName(file), file: `gormiti/${file}`, ...(nome && { nome }), ...(alias && { alias }) };
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'it'));
-  return { gormiti };
+  return { gormiti, stemmi: scanStemmi(join(assetsDir, 'stemmi')) };
+}
+
+// "stemmaAria.svg", "stemma-aria.svg", "Aria.svg" → the popolo "aria". One crest per popolo.
+export const stemmaPopolo = (file) =>
+  file
+    .replace(/\.svg$/i, '')
+    .replace(/^stemma[\s_-]*/i, '')
+    .toLocaleLowerCase('it');
+
+function scanStemmi(dir) {
+  return svgFiles(dir)
+    .map((file) => ({ popolo: stemmaPopolo(file), file: `stemmi/${file}` }))
+    .filter((s) => s.popolo)
+    .sort((a, b) => a.popolo.localeCompare(b.popolo, 'it'));
 }
 
 export function assetsManifest() {

@@ -198,11 +198,13 @@ check(
   initial.length === 1 &&
     seg.type === 'segment' &&
     seg.y1 === 405 &&
+    // read just after Genera: a frame or two of the fall may already have gone by
     Math.abs(start.x - spawn.x) < 1e-6 &&
-    Math.abs(start.y - spawn.y) < 1e-6 &&
+    start.y - spawn.y >= 0 &&
+    start.y - spawn.y < 2 &&
     Math.abs((rest.angle * 180) / Math.PI) < 0.5 &&
     Math.abs(bottom - (seg.y1 - 1)) < 0.6,
-  `partenza (${spawn.x}, ${spawn.y}), quiete y=${rest.y.toFixed(2)} angolo ${((rest.angle * 180) / Math.PI).toFixed(3)}°, base ${bottom.toFixed(2)} mm (segmento ${seg.y1 - 1})`,
+  `partenza (${spawn.x}, ${spawn.y}), blocco a y=${start.y.toFixed(2)} subito dopo Genera, quiete y=${rest.y.toFixed(2)} angolo ${((rest.angle * 180) / Math.PI).toFixed(3)}°, base ${bottom.toFixed(2)} mm (segmento ${seg.y1 - 1})`,
 );
 
 // 3 — Annulla then Genera with the same values: identical result

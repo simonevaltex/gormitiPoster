@@ -3,8 +3,8 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { figureName, scanAssets } from '../scripts/assets-manifest.mjs';
-import { loadFigures, chooseFigure } from '../src/figures.js';
+import { figureName, scanAssets, stemmaPopolo } from '../scripts/assets-manifest.mjs';
+import { loadFigures, loadAssets, chooseFigure } from '../src/figures.js';
 import { defaultParams } from '../src/elements/index.js';
 
 const BLOCK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect width="100" height="50"/></svg>';
@@ -33,8 +33,9 @@ it('the manifest lists the SVGs in assets/gormiti by name and ignores anything e
       { id: 'sommoLuminescente', name: 'Sommo Luminescente', file: 'gormiti/sommoLuminescente.svg' },
       { id: 'zz-top', name: 'Zz Top', file: 'gormiti/zz-top.svg' },
     ],
+    stemmi: [],
   });
-  expect(scanAssets(join(dir, 'missing'))).toEqual({ gormiti: [] });
+  expect(scanAssets(join(dir, 'missing'))).toEqual({ gormiti: [], stemmi: [] });
 });
 
 it('each figure takes its Nome and Alias from gormiti/nomi.json, keyed by file name with or without .svg', () => {
@@ -119,4 +120,24 @@ it('no manifest, no figures', async () => {
     throw new Error('404');
   });
   expect(figures.size).toBe(0);
+});
+
+it('crests in assets/stemmi are listed by popolo, taken from the file name', () => {
+  expect(stemmaPopolo('stemmaAria.svg')).toBe('aria');
+  expect(stemmaPopolo('stemma-Vulcano.svg')).toBe('vulcano');
+  expect(stemmaPopolo('Mare.svg')).toBe('mare');
+  const dir = mkdtempSync(join(tmpdir(), 'gormiti-assets-'));
+  mkdirSync(join(dir, 'stemmi'));
+  for (const f of ['stemmaTerra.svg', 'stemmaAria.svg', 'note.txt']) writeFileSync(join(dir, 'stemmi', f), BLOCK);
+  expect(scanAssets(dir).stemmi).toEqual([
+    { popolo: 'aria', file: 'stemmi/stemmaAria.svg' },
+    { popolo: 'terra', file: 'stemmi/stemmaTerra.svg' },
+  ]);
+});
+
+it("Simone's seven crests load, one per popolo", async () => {
+  const assets = fileURLToPath(new URL('../public/assets/', import.meta.url));
+  const manifest = scanAssets(assets);
+  const { stemmi } = await loadAssets(async (path) => (path === 'manifest.json' ? JSON.stringify(manifest) : readFileSync(join(assets, path), 'utf8')));
+  expect([...stemmi.keys()]).toEqual(['aria', 'foresta', 'luce', 'mare', 'tenebre', 'terra', 'vulcano']);
 });

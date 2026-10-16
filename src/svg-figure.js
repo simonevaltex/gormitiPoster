@@ -441,19 +441,28 @@ export function parseFigureSvg(text) {
 export function buildFigure(figure, width, { paint, detail }) {
   const s = Math.max(width - 2 * OUTER_MM, 1) / figure.bounds.width;
   const thumbnail = detail === 'thumbnail';
-  const minSize = thumbnail ? THUMBNAIL_MIN_MM / s : 0;
   const tolerance = (thumbnail ? THUMBNAIL_TOLERANCE_MM : RING_TOLERANCE_MM) / s;
   // Ring coordinates to a hundredth of a mm or better; thumbnails get one decimal.
   const digits = thumbnail ? 1 : Math.min(4, Math.max(1, Math.ceil(Math.log10(s / 0.01))));
+  const rings =
+    `<path d="${ringOutline(figure, OUTER_MM / s, tolerance, digits)}" ${paint({ fill: 'ink' })}/>` +
+    `<path d="${ringOutline(figure, FIGURE_PAPER_MM / s, tolerance, digits)}" ${paint({ fill: 'paper' })}/>`;
+  const markup = `<g transform="scale(${s})">${rings}${drawingMarkup(figure, s, paint, detail)}</g>`;
+  const disc = regularPolygon(OUTER_MM, 12);
+  const outer = convexHull(figure.hull.flatMap((p) => disc.map((q) => ({ x: p.x * s + q.x, y: p.y * s + q.y }))));
+  return { markup, collisionPolygon: simplifyPolygon(outer, 0.02, 40), bounds: boundsOf(outer) };
+}
+
+// The drawing at scale s, shapes in order; consecutive shapes with the same paint share a group.
+// Thumbnails skip the specks and simplify the outlines.
+function drawingMarkup(figure, s, paint, detail) {
+  const thumbnail = detail === 'thumbnail';
+  const minSize = thumbnail ? THUMBNAIL_MIN_MM / s : 0;
+  const tolerance = (thumbnail ? THUMBNAIL_TOLERANCE_MM : RING_TOLERANCE_MM) / s;
   const shapes = figure.shapes
     .filter((sh) => Math.max(sh.box.width, sh.box.height) >= minSize)
     .map((sh) => (thumbnail ? { ...sh, d: simplifiedPath(sh.d, tolerance) } : sh))
     .filter((sh) => sh.d);
-  const rings =
-    `<path d="${ringOutline(figure, OUTER_MM / s, tolerance, digits)}" ${paint({ fill: 'ink' })}/>` +
-    `<path d="${ringOutline(figure, FIGURE_PAPER_MM / s, tolerance, digits)}" ${paint({ fill: 'paper' })}/>`;
-
-  // The drawing, in order; consecutive shapes with the same paint share a group.
   let drawing = '';
   let open = null;
   for (const sh of shapes) {
@@ -465,9 +474,28 @@ export function buildFigure(figure, width, { paint, detail }) {
     drawing += `<path d="${sh.d}"/>`;
   }
   if (open !== null) drawing += '</g>';
+  return drawing;
+}
 
-  const markup = `<g transform="scale(${s})">${rings}${drawing}</g>`;
-  const disc = regularPolygon(OUTER_MM, 12);
-  const outer = convexHull(figure.hull.flatMap((p) => disc.map((q) => ({ x: p.x * s + q.x, y: p.y * s + q.y }))));
-  return { markup, collisionPolygon: simplifyPolygon(outer, 0.02, 40), bounds: boundsOf(outer) };
+// ---------- the Stemma ----------
+
+// Around the round drawing (paper disc and symbol): an ink line, a paper gap and an ink line,
+// all as thick as the outline of Nome. The double ring sits outside the drawing.
+export const STEMMA_GAP_MM = OUTLINE_MM;
+export const STEMMA_RINGS_MM = 2 * OUTLINE_MM + STEMMA_GAP_MM;
+
+// { markup, collisionPolygon, bounds } in mm, centred on (0, 0), exactly `diameter` wide.
+export function buildStemmaFigure(figure, diameter, { paint, detail }) {
+  const R = diameter / 2;
+  const s = Math.max(diameter - 2 * STEMMA_RINGS_MM, 1) / Math.max(figure.bounds.width, figure.bounds.height);
+  const cx = figure.bounds.x + figure.bounds.width / 2;
+  const cy = figure.bounds.y + figure.bounds.height / 2;
+  const line = (r) => `<circle r="${fmt(r)}" ${paint({ fill: 'none', stroke: 'ink', width: OUTLINE_MM })}/>`;
+  const markup =
+    `<circle r="${fmt(R)}" ${paint({ fill: 'paper' })}/>` +
+    line(R - OUTLINE_MM / 2) +
+    line(R - STEMMA_RINGS_MM + OUTLINE_MM / 2) +
+    `<g transform="translate(${fmt(-cx * s)} ${fmt(-cy * s)}) scale(${s})">${drawingMarkup(figure, s, paint, detail)}</g>`;
+  const poly = regularPolygon(R, 32);
+  return { markup, collisionPolygon: poly, bounds: boundsOf(poly) };
 }

@@ -1,5 +1,6 @@
 import { boundsOf, regularPolygon } from '../geometry.js';
 import { fmt } from '../svg.js';
+import { buildStemmaFigure } from '../svg-figure.js';
 
 // Symbols are drawn around (0, 0) inside a circle of radius s (mm), with SVG primitives only.
 const SYMBOLS = {
@@ -84,12 +85,16 @@ const SYMBOLS = {
   },
 };
 
-// Round crest: paper disc, double ring (two concentric outlines), symbol of the popolo.
+// Round crest: Simone's SVG of the popolo (public/assets/stemmi) inside a double ink ring, see
+// buildStemmaFigure. Without the file, a placeholder: paper disc, double ring, simple symbol.
 export default {
   type: 'stemma',
   label: 'Stemma',
   defaults: { popolo: 'aria', diameter: 20 },
-  build({ popolo, diameter }, { paint }) {
+  build({ popolo, diameter }, ctx) {
+    const figure = ctx.stemmi?.get(popolo);
+    if (figure) return buildStemmaFigure(figure, diameter, ctx);
+    const { paint } = ctx;
     const R = diameter / 2;
     const outer = 0.07 * R;
     const symbol = SYMBOLS[popolo] ?? SYMBOLS.aria;
