@@ -147,12 +147,15 @@ const bottomOf = (index) =>
     const s = Math.sin(p.angle);
     return Math.max(...e.built.collisionPolygon.map((v) => p.y + (v.x - e.built.centre.x) * s + (v.y - e.built.centre.y) * c));
   }, index);
-const exportFile = async (name, { format = 'PDF vettoriale', marks = false } = {}) => {
+const exportFile = async (name, { format = 'PDF', page: pageOption = 'bleed', marks = false } = {}) => {
   await button('Esporta').click();
   const dialog = page.locator('.dialog');
-  await dialog.getByRole('radio', { name: format }).click();
-  const box = dialog.getByRole('checkbox');
-  if ((await box.isChecked()) !== marks) await box.click();
+  await dialog.getByRole('radio', { name: format, exact: true }).click();
+  await dialog.getByRole('radio', { name: pageOption === 'a3' ? /^A3$/ : /^Con bleed/ }).click();
+  if (pageOption !== 'a3') {
+    const box = dialog.getByRole('checkbox', { name: /Segni di taglio/ });
+    if ((await box.isChecked()) !== marks) await box.click();
+  }
   const [download] = await Promise.all([page.waitForEvent('download'), dialog.getByRole('button', { name: 'Scarica' }).click()]);
   const path = `${OUT}/${name}`;
   await download.saveAs(path);
@@ -449,7 +452,7 @@ check(
     finalInfo.fonts === 0 &&
     exactColours &&
     renderBad === 0 &&
-    final.suggested === 'gormiti-poster-001.pdf' &&
+    final.suggested === 'gormitiPoster001_terra_furiaCieca.pdf' &&
     svgText.includes('width="303mm" height="426mm"'),
   `operatori di testo ${finalInfo.hasText}, font ${finalInfo.fonts}, colori ${finalInfo.colours.join(' ')}, pixel fuori palette nel render ${renderBad}, file ${final.suggested} + ${svgFile.suggested}`,
 );

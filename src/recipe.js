@@ -34,7 +34,7 @@ function cropMarks(bleed, slug, paint) {
 
 export function composeSheetSvg(
   recipe,
-  { fonts, figures, stemmi, numero, popoli, paint, cropMarks: withMarks = false, slug = EXPORT.slug, idPrefix = 'sheet', posterNumber = recipe.number, detail },
+  { fonts, figures, stemmi, numero, popoli, paint, cropMarks: withMarks = false, slug = EXPORT.slug, idPrefix = 'sheet', posterNumber = recipe.number, detail, background = true },
 ) {
   const bleed = recipe.bleed;
   const s = withMarks ? slug : 0;
@@ -54,7 +54,7 @@ export function composeSheetSvg(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(width)}mm" height="${fmt(height)}mm" ` +
     `viewBox="${fmt(origin)} ${fmt(origin)} ${fmt(width)} ${fmt(height)}">` +
     `<defs><clipPath id="${clipId}"><rect ${bleedRect}/></clipPath></defs>` +
-    `<rect ${bleedRect} ${paint({ fill: 'paper' })}/>` +
+    (background ? `<rect ${bleedRect} ${paint({ fill: 'paper' })}/>` : '') +
     `<g clip-path="url(#${clipId})">${elements}</g>` +
     (withMarks ? cropMarks(bleed, s, paint) : '') +
     '</svg>';

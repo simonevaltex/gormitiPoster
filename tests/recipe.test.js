@@ -45,6 +45,14 @@ it('clips at the bleed, uses exact colours and draws no guides', () => {
   expect(svg).toContain('stroke-width="0.1"'); // crop marks
 });
 
+it('a transparent export leaves out the paper background, nothing else', () => {
+  const full = composeSheetSvg(recipe(3), { fonts, paint }).svg;
+  const bare = composeSheetSvg(recipe(3), { fonts, paint, background: false }).svg;
+  expect(full).toContain('<rect x="-3" y="-3" width="303" height="426" fill="#808080"/>');
+  expect(bare).not.toContain('<rect x="-3" y="-3" width="303" height="426" fill="#808080"/>');
+  expect(bare).toEqual(full.replace('<rect x="-3" y="-3" width="303" height="426" fill="#808080"/>', ''));
+});
+
 it('thumbnails use the screen classes and their own clip id', () => {
   const { svg } = composeSheetSvg(recipe(3), { fonts, paint: screenPaint, idPrefix: 'thumb-p1' });
   expect(svg).toContain('id="thumb-p1-bleed"');

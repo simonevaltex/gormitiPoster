@@ -61,7 +61,15 @@ const tools = bindSheetTools(view, store, model, {
 createPanels({ root: document.getElementById('panel'), store, model, tools, figures });
 createSheetInfo({ root: document.getElementById('sheet-info'), store, model });
 
-const exportDialog = createExportDialog({ root: document.getElementById('export-modal'), fonts, figures, stemmi, numero, popoli });
+const exportDialog = createExportDialog({
+  root: document.getElementById('export-modal'),
+  fonts,
+  figures,
+  stemmi,
+  numero,
+  popoli,
+  currentColors: () => s.colors,
+});
 // The current sheet exports with the number it has (or will get) in the archive.
 const currentRecipe = () =>
   model.toRecipe({ id: s.poster.id ?? 'foglio', number: model.displayNumber(), date: new Date().toISOString() });

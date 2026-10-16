@@ -1,73 +1,166 @@
-// "Esporta" dialog, in the page: format, bleed (from the poster), crop marks, file name.
-import { A3, EXPORT } from '../constants.js';
-import { exportPdf, exportSvg, downloadBlob, exportFileName } from '../export.js';
+// "Esporta" dialog, in the page: format, page (A3 or with the bleed, crop marks), colours,
+// paper, and for PNG the scale and the edges. The choices become a setup (export-options.js).
+import { EXPORT } from '../constants.js';
+import { exportPdf, exportSvg, exportPng, downloadBlob } from '../export.js';
+import { exportSetup, pngSize, exportFileName, EXPORT_DEFAULTS, PNG_SCALES } from '../export-options.js';
 import { h, segmented, checkboxField } from './dom.js';
 import { showStatus } from './status.js';
 
-export function createExportDialog({ root, fonts, figures, stemmi, numero, popoli }) {
+const NS = 'http://www.w3.org/2000/svg';
+const mm = (v) => v.toLocaleString('it-IT', { maximumFractionDigits: 1 });
+const scaleLabel = (k) => `×${k.toLocaleString('it-IT')}`;
+
+function closeIcon() {
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', 'M5 5l14 14M19 5L5 19');
+  svg.append(path);
+  return svg;
+}
+
+// A colour picker for the custom colours, shown as its hex value (the swatch would be a third
+// colour on screen).
+function swatch(label, onInput) {
+  const input = h('input', { type: 'color', 'aria-label': label });
+  const hex = h('output', { class: 'mono' });
+  input.addEventListener('input', () => onInput(input.value));
+  return { el: h('label', { class: 'swatch' }, input, hex, h('span', { class: 'label' }, label)), input, hex };
+}
+
+export function createExportDialog({ root, fonts, figures, stemmi, numero, popoli, currentColors }) {
+  const assets = { fonts, figures, stemmi, numero, popoli };
   let recipe = null;
   let opener = null;
-  const state = { format: 'pdf', cropMarks: false };
+  const choice = { ...EXPORT_DEFAULTS };
 
   const title = h('h2', { class: 'label', id: 'export-title' }, 'Esporta');
-  const close = h('button', { type: 'button', onclick: () => hide() }, 'Chiudi');
+  const close = h('button', { type: 'button', class: 'icon close', 'aria-label': 'Chiudi', title: 'Chiudi', onclick: () => hide() }, closeIcon());
+  const pick = (key) => (v) => {
+    choice[key] = v;
+    refresh();
+  };
+
   const format = segmented({
     label: 'Formato',
     options: [
-      { value: 'pdf', label: 'PDF vettoriale' },
+      { value: 'pdf', label: 'PDF' },
       { value: 'svg', label: 'SVG' },
+      { value: 'png', label: 'PNG' },
     ],
-    value: state.format,
-    onChange: (v) => {
-      state.format = v;
-      refresh();
-    },
+    value: choice.format,
+    onChange: pick('format'),
   });
-  const marks = checkboxField({
-    label: `Segni di taglio (abbondanza ${EXPORT.slug} mm)`,
-    checked: false,
-    onChange: (v) => {
-      state.cropMarks = v;
-      refresh();
-    },
+  const pageField = segmented({
+    label: 'Pagina',
+    options: [
+      { value: 'a3', label: 'A3' },
+      { value: 'bleed', label: 'Con bleed' },
+    ],
+    value: choice.page,
+    onChange: pick('page'),
   });
-  const bleed = h('p', { class: 'readout' });
-  const page = h('p', { class: 'readout' });
+  const marks = checkboxField({ label: `Segni di taglio (abbondanza ${EXPORT.slug} mm)`, checked: choice.cropMarks, onChange: pick('cropMarks') });
+  const colors = segmented({
+    label: 'Colori',
+    options: [
+      { value: 'current', label: 'Attuali' },
+      { value: 'saved', label: 'Salvati' },
+      { value: 'custom', label: 'Personalizzati' },
+    ],
+    value: choice.colors,
+    onChange: pick('colors'),
+  });
+  const setCustom = (key) => (v) => {
+    choice.custom = { ...choice.custom, [key]: v };
+    refresh();
+  };
+  const carta = swatch('Carta', setCustom('carta'));
+  const inchiostro = swatch('Inchiostro', setCustom('inchiostro'));
+  const customRow = h('div', { class: 'export-colors' }, carta.el, inchiostro.el);
+  const sameColors = h('p', { class: 'warning', role: 'alert', hidden: true }, 'Carta e inchiostro devono essere diversi');
+  const colorsReadout = h('p', { class: 'readout' });
+  const paper = segmented({
+    label: 'Carta',
+    options: [
+      { value: 'full', label: 'Piena' },
+      { value: 'transparent', label: 'Trasparente' },
+    ],
+    value: choice.transparent ? 'transparent' : 'full',
+    onChange: (v) => pick('transparent')(v === 'transparent'),
+  });
+  const invert = checkboxField({ label: 'Inverti carta e inchiostro', checked: choice.invert, onChange: pick('invert') });
+  const scale = segmented({
+    label: 'Scala (×1 = 96 px per pollice)',
+    options: PNG_SCALES.map((k) => ({ value: String(k), label: scaleLabel(k) })),
+    value: String(choice.scale),
+    onChange: (v) => pick('scale')(Number(v)),
+  });
+  const edges = segmented({
+    label: 'Bordi',
+    options: [
+      { value: 'smooth', label: 'Anti-alias' },
+      { value: 'hard', label: 'Alias' },
+    ],
+    value: choice.aliased ? 'hard' : 'smooth',
+    onChange: (v) => pick('aliased')(v === 'hard'),
+  });
+  const pngGroup = h('div', { class: 'stack' }, scale.field, edges.field);
+  const pageReadout = h('p', { class: 'readout' });
   const file = h('p', { class: 'readout' });
   const download = h('button', { type: 'button', class: 'primary' }, 'Scarica');
   const note = h('p', { class: 'hint' }, 'Testo in tracciati, colori esatti in RGB. Guide, griglie e pad non vengono esportati.');
 
   const dialog = h(
     'div',
-    { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'export-title' },
+    { class: 'dialog export', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'export-title' },
     h('div', { class: 'dialog-head' }, title, close),
-    format.field,
-    bleed,
-    marks.field,
-    page,
-    file,
-    h('div', { class: 'row' }, download),
-    note,
+    h(
+      'div',
+      { class: 'export-grid' },
+      h('div', { class: 'stack' }, format.field, pageField.field, marks.field, paper.field, invert.field, pngGroup),
+      h('div', { class: 'stack' }, colors.field, customRow, sameColors, colorsReadout, pageReadout, file),
+    ),
+    h('div', { class: 'export-foot' }, download, note),
   );
   root.append(dialog);
 
+  const setupNow = () => exportSetup(recipe, choice, currentColors());
+
   function refresh() {
     if (!recipe) return;
-    const slug = state.cropMarks ? EXPORT.slug : 0;
-    const w = A3.width + 2 * (recipe.bleed + slug);
-    const hgt = A3.height + 2 * (recipe.bleed + slug);
-    bleed.textContent = `Bleed ${recipe.bleed} mm (dal poster)`;
-    page.textContent = `Pagina ${w} × ${hgt} mm`;
-    file.textContent = `File ${exportFileName(recipe.number, state.format)}`;
+    pageField.field.querySelector('[data-value="bleed"]').textContent = `Con bleed (${mm(recipe.bleed)} mm)`;
+    marks.field.hidden = choice.page !== 'bleed';
+    customRow.hidden = choice.colors !== 'custom';
+    for (const [key, sw] of [['carta', carta], ['inchiostro', inchiostro]]) {
+      sw.input.value = choice.custom[key];
+      sw.hex.textContent = choice.custom[key].toUpperCase();
+    }
+    pngGroup.hidden = choice.format !== 'png';
+    const setup = setupNow();
+    const { carta: c, inchiostro: i } = setup.recipe.colors;
+    const same = c.toLowerCase() === i.toLowerCase();
+    sameColors.hidden = !same;
+    download.disabled = same;
+    colorsReadout.textContent = `Carta ${c.toUpperCase()} · Inchiostro ${i.toUpperCase()}`;
+    const px = pngSize(setup, choice.scale);
+    pageReadout.textContent = `Pagina ${mm(setup.width)} × ${mm(setup.height)} mm${choice.format === 'png' ? ` · ${px.width} × ${px.height} px` : ''}`;
+    file.textContent = `File ${exportFileName(recipe, choice.format, figures)}`;
   }
 
   download.addEventListener('click', async () => {
-    const name = exportFileName(recipe.number, state.format);
+    const name = exportFileName(recipe, choice.format, figures);
     download.disabled = true;
     download.textContent = 'Preparazione…';
     try {
-      const options = { fonts, figures, stemmi, numero, popoli, cropMarks: state.cropMarks };
-      const blob = state.format === 'pdf' ? await exportPdf(recipe, options) : exportSvg(recipe, options);
+      const setup = setupNow();
+      const blob =
+        choice.format === 'pdf'
+          ? await exportPdf(setup, assets)
+          : choice.format === 'png'
+            ? await exportPng(setup, assets, { scale: choice.scale, aliased: choice.aliased })
+            : exportSvg(setup, assets);
       downloadBlob(blob, name);
       showStatus(`Esportato ${name}`);
       hide();
@@ -75,14 +168,16 @@ export function createExportDialog({ root, fonts, figures, stemmi, numero, popol
       console.warn(err);
       showStatus('Esportazione non riuscita');
     } finally {
-      download.disabled = false;
       download.textContent = 'Scarica';
+      refresh();
     }
   });
 
   function show(r) {
     recipe = r;
     opener = document.activeElement;
+    // Custom colours start from the current ones, until changed.
+    if (!choice.custom) choice.custom = { ...currentColors() };
     refresh();
     root.hidden = false;
     download.focus();

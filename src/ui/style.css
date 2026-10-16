@@ -978,3 +978,59 @@ textarea:read-only,
 .dialog-head h2 {
   margin: 0;
 }
+
+/* Esporta: wider, two columns of settings, a plain X to close. */
+.dialog.export {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px 28px;
+  align-items: start;
+}
+
+.export-foot {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.dialog-head .close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.export-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* The custom colours are shown as text only: on screen the site keeps its two colours. The real
+   picker sits invisible over the box and opens on click. */
+.export-colors .swatch {
+  position: relative;
+  padding: 6px 10px;
+  border: var(--line);
+}
+
+.export-colors .swatch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.export-colors .swatch:focus-within {
+  outline: 3px solid var(--inchiostro);
+  outline-offset: 2px;
+}

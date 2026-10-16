@@ -100,13 +100,23 @@ arrivate da un server andranno sanificate prima di inserirle nella pagina.
 
 ## Export
 
-- **PDF vettoriale** (jsPDF + svg2pdf.js) generato dallo stesso SVG dell'export **SVG**.
-- Testo sempre in tracciati (opentype.js), nessun font incorporato.
-- Colori esatti in RGB, come scelti. **Nessuna conversione CMYK per ora.**
-- TrimBox e BleedBox impostati con pdf-lib.
-- Segni di taglio opzionali con un'abbondanza di 10 mm: pagina (297 + 2·bleed + 20) ×
-  (420 + 2·bleed + 20) mm; senza segni (297 + 2·bleed) × (420 + 2·bleed) mm.
-- Nome file: `gormiti-poster-012.pdf`.
+La finestra **Esporta** (si chiude con la X o con Esc):
+
+- **Formato**: PDF, SVG o PNG. Il PDF (jsPDF + svg2pdf.js) e il PNG nascono dallo stesso SVG.
+- **Pagina**: **A3** (solo il formato rifilato, 297 × 420 mm, senza bleed) oppure **Con bleed**
+  (297 + 2·bleed) × (420 + 2·bleed) mm, e in questo caso con o senza **segni di taglio**, in
+  un'abbondanza di 10 mm: (297 + 2·bleed + 20) × (420 + 2·bleed + 20) mm.
+- **Colori**: quelli **attuali** del sito, quelli **salvati** con il poster o **personalizzati**
+  (due selettori, mostrati come esadecimale perché a schermo restano solo i due colori del sito).
+- **Carta**: **piena** o **trasparente** (niente sfondo; nel PDF la pagina resta bianca), e
+  **inverti** per scambiare carta e inchiostro.
+- **PNG**: **scala** ×0,5, ×1, ×2, ×3, ×4, dove ×1 = 96 px per pollice (A3 = 1123 × 1587 px), e
+  **bordi** anti-alias o alias. Con l'alias l'immagine ha esattamente i due colori: anche le linee
+  più sottili di un pixel vengono portate al colore più vicino.
+- Testo sempre in tracciati (opentype.js), nessun font incorporato. Colori esatti in RGB.
+  **Nessuna conversione CMYK per ora.** Nel PDF TrimBox e BleedBox sono impostati con pdf-lib.
+- Nome file: `gormitiPoster012_terra_furiaCieca.pdf`: numero del poster, popolo del Gormita
+  (quello della figura, altrimenti quello del blocco Popolo), poi Nome e Alias in camelCase.
 
 ## Figure dei Gormiti (SVG)
 

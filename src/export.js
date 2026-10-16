@@ -1,18 +1,19 @@
-// Vector export. The PDF is drawn from the same SVG as the SVG export (text already in outlines,
-// exact hex colours); pdf-lib then sets TrimBox and BleedBox. The libraries load on demand.
+// Export. PDF and PNG are drawn from the same SVG as the SVG export (text already in outlines,
+// exact hex colours); for the PDF pdf-lib then sets TrimBox and BleedBox, and the libraries load
+// on demand. `setup` comes from exportSetup (export-options.js): page, colours, background.
 import { A3 } from './constants.js';
 import { composeSheetSvg } from './recipe.js';
 import { exportPaint } from './paint.js';
+import { pngSize, exportFileName } from './export-options.js';
 
 const PT_PER_MM = 72 / 25.4;
 
-export const exportFileName = (number, ext) => `gormiti-poster-${String(number).padStart(3, '0')}.${ext}`;
 
-const exportSvgMarkup = (recipe, { fonts, figures, stemmi, numero, popoli, cropMarks }) =>
-  composeSheetSvg(recipe, { fonts, figures, stemmi, numero, popoli, paint: exportPaint(recipe.colors), cropMarks, idPrefix: 'export' });
+const exportSvgMarkup = ({ recipe, cropMarks, background }, assets) =>
+  composeSheetSvg(recipe, { ...assets, paint: exportPaint(recipe.colors), cropMarks, background, idPrefix: 'export' });
 
-export function exportSvg(recipe, options) {
-  const { svg } = exportSvgMarkup(recipe, options);
+export function exportSvg(setup, assets) {
+  const { svg } = exportSvgMarkup(setup, assets);
   return new Blob([`<?xml version="1.0" encoding="UTF-8"?>\n${svg}`], { type: 'image/svg+xml' });
 }
 
@@ -41,10 +42,11 @@ function dropUnusedFonts(pdf, page, { PDFName, PDFDict, PDFRef }) {
   resources.delete(PDFName.of('Font'));
 }
 
-export async function exportPdf(recipe, options) {
+export async function exportPdf(setup, assets) {
   const [{ jsPDF }, , pdfLib] = await Promise.all([import('jspdf'), import('svg2pdf.js'), import('pdf-lib')]);
   const { PDFDocument } = pdfLib;
-  const { svg, width, height, bleed, slug } = exportSvgMarkup(recipe, options);
+  const { recipe } = setup;
+  const { svg, width, height, bleed, slug } = exportSvgMarkup(setup, assets);
   // svg2pdf needs a live DOM element; keep it off screen while it is read.
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden';
@@ -61,10 +63,59 @@ export async function exportPdf(recipe, options) {
     dropUnusedFonts(pdf, page, pdfLib);
     page.setBleedBox(slug * PT_PER_MM, slug * PT_PER_MM, (A3.width + 2 * bleed) * PT_PER_MM, (A3.height + 2 * bleed) * PT_PER_MM);
     page.setTrimBox((slug + bleed) * PT_PER_MM, (slug + bleed) * PT_PER_MM, A3.width * PT_PER_MM, A3.height * PT_PER_MM);
-    pdf.setTitle(exportFileName(recipe.number, 'pdf').replace('.pdf', ''));
+    pdf.setTitle(exportFileName(recipe, 'pdf', assets.figures).replace(/\.pdf$/, ''));
     return new Blob([await pdf.save()], { type: 'application/pdf' });
   } finally {
     host.remove();
+  }
+}
+
+// Even with crispEdges, lines thinner than a pixel come out a shade lighter: every pixel takes the
+// nearer of the two colours, and is either opaque or fully transparent.
+function snapToTwoColours(ctx, width, height, { carta, inchiostro }) {
+  const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const [p, k] = [rgb(carta), rgb(inchiostro)];
+  const image = ctx.getImageData(0, 0, width, height);
+  const d = image.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < 128) {
+      d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 0;
+      continue;
+    }
+    const dp = (d[i] - p[0]) ** 2 + (d[i + 1] - p[1]) ** 2 + (d[i + 2] - p[2]) ** 2;
+    const dk = (d[i] - k[0]) ** 2 + (d[i + 1] - k[1]) ** 2 + (d[i + 2] - k[2]) ** 2;
+    const c = dp <= dk ? p : k;
+    d[i] = c[0];
+    d[i + 1] = c[1];
+    d[i + 2] = c[2];
+    d[i + 3] = 255;
+  }
+  ctx.putImageData(image, 0, 0);
+}
+
+// The same SVG drawn on a canvas at `scale` × 96 px per inch. aliased: hard edges, so the image
+// keeps exactly the two colours (anti-aliasing adds in-between pixels on the edges).
+export async function exportPng(setup, assets, { scale, aliased }) {
+  const { width, height } = pngSize(setup, scale);
+  let { svg } = exportSvgMarkup(setup, assets);
+  // Whole pixels change the proportions a hair: stretch rather than leave a sub-pixel edge.
+  const attrs = `width="${width}" height="${height}" preserveAspectRatio="none"${aliased ? ' shape-rendering="crispEdges"' : ''}`;
+  svg = svg.replace(/^<svg ([^>]*?)width="[^"]+" height="[^"]+"/, `<svg $1${attrs}`);
+  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = !aliased;
+    ctx.drawImage(image, 0, 0, width, height);
+    if (aliased) snapToTwoColours(ctx, width, height, setup.recipe.colors);
+    return await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('PNG non creato'))), 'image/png'));
+  } finally {
+    URL.revokeObjectURL(url);
   }
 }
 
