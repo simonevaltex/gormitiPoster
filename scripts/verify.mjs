@@ -73,6 +73,8 @@ const buildRun = spawnSync('npx', ['vite', 'build', '--logLevel', 'error'], { en
 const buildOk = buildRun.status === 0;
 if (!buildOk) console.log(buildRun.stdout, buildRun.stderr);
 
+// The shared archive starts empty, in memory (see scripts/api-dev.mjs).
+process.env.GORMITI_DB = 'memory';
 const server = await createServer({ server: { port: 5199 }, logLevel: 'error' });
 await server.listen();
 const base = server.resolvedUrls.local[0];
@@ -414,6 +416,8 @@ await page.locator('#carta').fill('#ffffff');
 await page.locator('#inchiostro').fill('#000000');
 await page.reload();
 await ready();
+// The list arrives from the API after the sheet is ready.
+await page.waitForFunction(() => window.__gormiti.store.state.archive.items.length > 0, null, { timeout: 5000 }).catch(() => {});
 const afterReload = await state('s => s.archive.items.length');
 await page.getByRole('tab', { name: 'Archivio' }).click();
 await button('Riapri').click();

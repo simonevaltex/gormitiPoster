@@ -12,7 +12,9 @@
     "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
     "clipper-lib": "6.4.2",
+    "dompurify": "3.4.17",
     "jspdf": "^4.2.1",
     "matter-js": "0.20.0",
     "opentype.js": "2.0.0",
@@ -21,6 +23,7 @@
     "svgpath": "2.6.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "pdfjs-dist": "^6.4.299",
     "playwright": "^1.64.1",
     "pngjs": "^7.0.0",

@@ -2,3 +2,6 @@ node_modules/
 dist/
 verification-output/
 .DS_Store
+.data/
+.env*.local
+.vercel

@@ -913,6 +913,17 @@ textarea:read-only,
   gap: 24px;
 }
 
+/* The posters saved in this browser before the shared archive, with the button that copies them. */
+.archive-migration:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin: 24px 24px 0;
+  padding: 12px;
+  border: 1px dashed var(--inchiostro);
+}
+
 .archive-list > .hint {
   grid-column: 1 / -1;
 }

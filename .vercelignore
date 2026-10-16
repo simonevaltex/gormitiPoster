@@ -3,3 +3,5 @@ dist
 verification-output
 tests
 .DS_Store
+.data
+.env*.local

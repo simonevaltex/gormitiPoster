@@ -16,6 +16,8 @@ import { showStatus } from './ui/status.js';
 import { isTyping } from './ui/dom.js';
 import { STEP_MS } from './constants.js';
 
+// Without the fonts nothing can be drawn: say so on the loading screen instead of waiting forever.
+const loading = document.getElementById('loading');
 const [fonts, { figures, stemmi, numero, popoli }] = await Promise.all([
   loadFonts((file) =>
     fetch(`${import.meta.env.BASE_URL}fonts/${file}`).then((r) => {
@@ -30,7 +32,10 @@ const [fonts, { figures, stemmi, numero, popoli }] = await Promise.all([
       return r.text();
     }),
   ),
-]);
+]).catch((err) => {
+  loading.textContent = 'Caricamento non riuscito. Ricarica la pagina.';
+  throw err;
+});
 
 const store = createStore();
 const s = store.state;
@@ -122,7 +127,9 @@ store.subscribe((topic) => {
 });
 
 model.reset();
-await archive.refresh();
+// The shared archive answers over the network: the sheet doesn't wait for it, the Numero badges
+// update when the list arrives.
+archive.refresh();
 
 // Cmd/Ctrl+Z removes the last block (text fields keep their own undo).
 window.addEventListener('keydown', (e) => {
@@ -154,6 +161,6 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-document.getElementById('loading').remove();
+loading.remove();
 
 if (import.meta.env.DEV) window.__gormiti = { store, physics, model, view, figures, stemmi, numero, popoli, ready: true };
