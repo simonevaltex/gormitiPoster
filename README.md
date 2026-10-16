@@ -182,9 +182,10 @@ src/storage/         adattatore di salvataggio (local.js ora, api.js in futuro)
 src/export.js        PDF e SVG
 src/recipe.js        ricetta → SVG (export e miniature)
 src/ui/              header, pannelli, dialoghi, stile
-scripts/assets-manifest.mjs  elenco di figure (con nome e alias) e stemmi (servito in sviluppo, scritto nella build)
+scripts/assets-manifest.mjs  elenco di figure (con nome, alias e popolo), stemmi e badge del numero (servito in sviluppo, scritto nella build)
 public/assets/gormiti/       gli SVG delle figure e nomi.json
 public/assets/stemmi/        gli SVG degli stemmi, uno per popolo
+public/assets/numero/        l'SVG del badge del Numero
 ```
 
 ## Stemmi (SVG)
@@ -197,10 +198,29 @@ spazio carta e un'altra linea inchiostro, tutti da 0,5 mm come il contorno di No
 figure, i colori scuri diventano inchiostro e quelli chiari carta. Un popolo senza file usa il
 simbolo segnaposto.
 
+## Numero (SVG)
+
+Il badge del Numero è l'SVG in `public/assets/numero/` (un file solo, il nome non conta; se ce ne
+sono più d'uno vale `numero.svg`). Il numero del poster (001, 002…) continua ad assegnarsi da solo:
+il file dà solo il disegno attorno.
+
+- Disegna il badge **senza numero**, in nero e bianco, forme piene, come le figure.
+- Disegna un **rettangolo** dove va il numero e chiamalo `numero` nel pannello Livelli. Il sito non
+  lo disegna: ci mette dentro il numero in Geist Mono, centrato e alto quanto il rettangolo (più
+  basso se tre cifre non ci starebbero in larghezza). Il **colore del rettangolo** è quello del
+  numero: bianco → carta, nero → inchiostro.
+- File › Esporta › Esporta come › SVG, con «ID oggetto: Nomi dei livelli», così il rettangolo arriva
+  con il nome `numero`.
+
+Il **Diametro** del tipo Numero è il lato più lungo del badge. Il sito non aggiunge contorni e per
+gli urti conta la sagoma esterna. Senza file, o se manca il rettangolo `numero` (avviso in console),
+resta il badge a stella.
+
 ## Fase 2
 
 - Gormiti: fatto (vedi «Figure dei Gormiti»).
 - Stemmi: fatto (vedi «Stemmi»).
+- Numero: fatto (vedi «Numero»).
 - Popoli: la cartella `public/assets/popoli/` esiste ma non viene ancora letta. Ogni elemento restituisce `{ markup, collisionPolygon, bounds }`, quindi basta cambiare la
   sorgente (per il lettering del Popolo la funzione da sostituire è `popoloLettering` in
   `src/elements/popolo.js`).
