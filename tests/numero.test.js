@@ -64,6 +64,19 @@ it("numero from Simone's SVG: as wide as the Diametro, the poster number in its 
   expect(exported.markup).not.toContain('class=');
 });
 
+it('Diametro and collisions follow the black badge: a white flourish around it is decoration', () => {
+  // The black disc of BADGE (60 wide) and a long white flourish reaching far up and left.
+  const flourished = BADGE.replace('<circle cx="30"', '<path class="st0" d="M-90,-120L35,5L5,35Z"/><circle cx="30"');
+  const numero = { file: 'numero/numero.svg', ...parseFigureSvg(flourished, { slot: 'numero' }) };
+  const plain = { file: 'numero/numero.svg', ...parseFigureSvg(BADGE, { slot: 'numero' }) };
+  const ctx = (n) => ({ fonts, paint: screenPaint, posterNumber: 7, numero: n });
+  const a = buildElement('numero', { diameter: 30 }, ctx(numero));
+  const b = buildElement('numero', { diameter: 30 }, ctx(plain));
+  expect(a.bounds).toEqual(b.bounds);
+  expect(a.collisionPolygon).toEqual(b.collisionPolygon);
+  expect(a.markup).toContain(fitNumber(fonts.mono, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
+});
+
 it('the badge SVG is any SVG in assets/numero (numero.svg first); none → no entry', () => {
   const dir = mkdtempSync(join(tmpdir(), 'gormiti-assets-'));
   expect(scanAssets(dir).numero).toBeNull();

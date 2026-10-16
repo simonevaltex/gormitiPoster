@@ -373,7 +373,8 @@ const STYLE_ATTRS = [...INHERITED, 'display', 'clip-path', 'mask'];
 // The figure in its own units: shapes in drawing order ({ d, paint, box }), the convex hull of
 // the whole silhouette, its bounds, and what was left out (images, text, clipping…).
 // With { slot: 'numero' }, the shape with that id (Illustrator writes the layer name, "numero-2"
-// when doubled) is not drawn: it becomes `slot`, { box, paint }, the place and colour of a text.
+// when doubled) is not drawn: it becomes `slot`, { box, paint }, the place and colour of a text;
+// `ink` is then the hull and bounds of the ink shapes alone (the badge without its paper flourish).
 export function parseFigureSvg(text, { slot: slotId } = {}) {
   const root = parseXml(text);
   const svg = root.children.find((n) => localName(n) === 'svg');
@@ -442,12 +443,14 @@ export function parseFigureSvg(text, { slot: slotId } = {}) {
   walk(svg, {}, IDENTITY);
   if (!shapes.length) throw new Error('nessuna forma da disegnare');
   const hull = convexHull(shapes.flatMap((s) => s.hull));
+  const inkHull = slotId && convexHull(shapes.filter((s) => s.paint.fill === 'ink' || s.paint.stroke === 'ink').flatMap((s) => s.hull));
   return {
     shapes: shapes.map(({ hull: _, ...s }) => s),
     hull,
     bounds: boundsOf(hull),
     unsupported: [...unsupported],
     ...(slot && { slot }),
+    ...(inkHull?.length > 2 && { ink: { hull: inkHull, bounds: boundsOf(inkHull) } }),
   };
 }
 
@@ -535,18 +538,20 @@ export function fitNumber(font, label, box) {
   };
 }
 
-// Simone's badge, centred on (0, 0), its larger side exactly `diameter`, and the poster number in
-// the "numero" box, in the box's colour. No rings: the badge is drawn whole in the file. The
-// collision shape doesn't depend on the number.
+// Simone's badge and the poster number in the "numero" box, in the box's colour. No rings: the
+// badge is drawn whole in the file. Size and collisions follow its ink part, centred on (0, 0),
+// the larger side exactly `diameter`; paper flourishes around it are decoration that may lie over
+// other blocks. The collision shape doesn't depend on the number.
 export function buildNumeroFigure(figure, diameter, label, { fonts, paint, detail }) {
-  const s = diameter / Math.max(figure.bounds.width, figure.bounds.height);
-  const cx = figure.bounds.x + figure.bounds.width / 2;
-  const cy = figure.bounds.y + figure.bounds.height / 2;
+  const core = figure.ink ?? figure;
+  const s = diameter / Math.max(core.bounds.width, core.bounds.height);
+  const cx = core.bounds.x + core.bounds.width / 2;
+  const cy = core.bounds.y + core.bounds.height / 2;
   const { box } = figure.slot;
   const number = fitNumber(fonts.mono, label, { x: (box.x - cx) * s, y: (box.y - cy) * s, width: box.width * s, height: box.height * s });
   const markup =
     `<g transform="translate(${fmt(-cx * s)} ${fmt(-cy * s)}) scale(${s})">${drawingMarkup(figure, s, paint, detail)}</g>` +
     `<path d="${number.d}" ${paint({ fill: figure.slot.paint })}/>`;
-  const outer = figure.hull.map((p) => ({ x: (p.x - cx) * s, y: (p.y - cy) * s }));
+  const outer = core.hull.map((p) => ({ x: (p.x - cx) * s, y: (p.y - cy) * s }));
   return { markup, collisionPolygon: simplifyPolygon(outer, 0.02, 40), bounds: boundsOf(outer) };
 }
