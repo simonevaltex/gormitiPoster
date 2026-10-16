@@ -36,9 +36,9 @@ it('the shape named "numero" is the box of the number: not drawn, its fill is th
 
 it('the number fills the height of its box, or its width when it would be wider, centred', () => {
   const box = { x: -10, y: -4, width: 20, height: 8 };
-  const tall = fitNumber(fonts.mono, '7', box);
+  const tall = fitNumber(fonts.serif, '7', box);
   expect(tall.bbox.y2 - tall.bbox.y1).toBeCloseTo(8, 1);
-  const wide = fitNumber(fonts.mono, '0123456789', box);
+  const wide = fitNumber(fonts.serif, '0123456789', box);
   expect(wide.bbox.x2 - wide.bbox.x1).toBeCloseTo(20, 1);
   for (const { bbox } of [tall, wide]) {
     expect((bbox.x1 + bbox.x2) / 2).toBeCloseTo(0, 5);
@@ -55,7 +55,7 @@ it("numero from Simone's SVG: as wide as the Diametro, the poster number in its 
   const b = buildElement('numero', { diameter: 30 }, ctx(12));
   expect(a.bounds.width).toBeCloseTo(30 + 2 * OUTLINE_MM, 1); // the disc and its outline
   expect(a.markup).toContain('scale(0.5)');
-  expect(a.markup).toContain(fitNumber(fonts.mono, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
+  expect(a.markup).toContain(fitNumber(fonts.serif, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
   expect(a.markup).not.toEqual(b.markup);
   expect(a.collisionPolygon).toEqual(b.collisionPolygon);
   expect(convexHull(a.collisionPolygon)).toHaveLength(a.collisionPolygon.length);
@@ -71,7 +71,7 @@ it('Diametro measures the black badge; collisions take the whole drawing, flouri
   const numero = { file: 'numero/numero.svg', ...parseFigureSvg(flourished, { slot: 'numero' }) };
   const a = buildElement('numero', { diameter: 30 }, { fonts, paint: screenPaint, posterNumber: 7, numero });
   expect(a.markup).toContain('scale(0.5)'); // the black disc is 30 mm
-  expect(a.markup).toContain(fitNumber(fonts.mono, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
+  expect(a.markup).toContain(fitNumber(fonts.serif, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
   // 150 × 180 drawing units → 75 × 90 mm, plus the outline on each side.
   expect(a.bounds.width).toBeCloseTo(75 + 2 * OUTLINE_MM, 1);
   expect(a.bounds.height).toBeCloseTo(90 + 2 * OUTLINE_MM, 1);

@@ -21,7 +21,7 @@ export default {
       const r = i % 2 ? 0.88 * R : R;
       return `${fmt(r * Math.cos(a))} ${fmt(r * Math.sin(a))}`;
     });
-    const text = layoutText(fonts.mono, label, { capHeight: 0.42 * R, tracking: 0 });
+    const text = layoutText(fonts.serif, label, { capHeight: 0.42 * R, tracking: 0, shaping: false });
     const b = text.bbox;
     const markup =
       `<path d="M${star.join('L')}Z" ${paint({ fill: 'ink' })}/>` +

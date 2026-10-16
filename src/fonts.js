@@ -8,6 +8,7 @@ export const FONT_FILES = {
   medium: 'Geist-Medium.ttf',
   bold: 'Geist-Bold.ttf',
   mono: 'GeistMono-Medium.ttf',
+  serif: 'InstrumentSerif-Regular.ttf', // the poster number (Simone's choice)
 };
 
 // loadBuffer(fileName) → ArrayBuffer (or a promise of one): fetch in the browser, fs in tests.

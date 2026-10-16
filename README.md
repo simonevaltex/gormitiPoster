@@ -162,6 +162,11 @@ salvati con quella figura tornano al segnaposto (e in `nomi.json` va cambiata an
 Geist e Geist Mono (statici TTF, licenza SIL Open Font License, vedi `public/fonts/OFL.txt`),
 dal repository `vercel/geist-font`.
 
+Il numero del poster è in Instrument Serif (Google Fonts, licenza SIL Open Font License, vedi
+`public/fonts/InstrumentSerif-OFL.txt`), dal repository `google/fonts`. Le cifre sono messe una
+accanto all'altra senza sostituzioni tipografiche: opentype.js 2.0 non sa applicare alcune regole
+di questo font, e alle cifre non servono.
+
 ## Struttura
 
 ```
@@ -206,7 +211,7 @@ il file dà solo il disegno attorno.
 
 - Disegna il badge **senza numero**, in nero e bianco, forme piene, come le figure.
 - Disegna un **rettangolo** dove va il numero e chiamalo `numero` nel pannello Livelli. Il sito non
-  lo disegna: ci mette dentro il numero in Geist Mono, centrato e alto quanto il rettangolo (più
+  lo disegna: ci mette dentro il numero in Instrument Serif, centrato e alto quanto il rettangolo (più
   basso se tre cifre non ci starebbero in larghezza). Il **colore del rettangolo** è quello del
   numero: bianco → carta, nero → inchiostro.
 - File › Esporta › Esporta come › SVG, con «ID oggetto: Nomi dei livelli», così il rettangolo arriva

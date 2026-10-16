@@ -28,14 +28,41 @@ const union = (a, b) => ({
   y2: Math.max(a.y2, b.y2),
 });
 
+// Glyphs side by side with their advances and kerning, no substitutions. For the poster number:
+// opentype.js 2.0 can't apply some of Instrument Serif's substitution lookups, and digits don't
+// need them.
+function unshapedPath(font, line, y, fontSize, tracking) {
+  const scale = fontSize / font.unitsPerEm;
+  const glyphs = [...line].map((ch) => font.charToGlyph(ch));
+  const commands = [];
+  let box = null;
+  let x = 0;
+  glyphs.forEach((glyph, i) => {
+    const path = glyph.getPath(x, y, fontSize);
+    commands.push(...path.commands);
+    const b = path.getBoundingBox();
+    if (b.x2 > b.x1) box = box ? union(box, b) : { x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2 };
+    const kern = glyphs[i + 1] ? font.getKerningValue(glyph, glyphs[i + 1]) : 0;
+    x += (glyph.advanceWidth + kern) * scale + tracking * fontSize;
+  });
+  return { commands, box };
+}
+
 // lineHeight and tracking are in em. bbox is the real ink box of the glyphs, not the font box.
-export function layoutText(font, text, { capHeight, lineHeight = 0.92, tracking = -0.03, uppercase = false }) {
+// shaping: false lays the glyphs out one by one (see unshapedPath).
+export function layoutText(font, text, { capHeight, lineHeight = 0.92, tracking = -0.03, uppercase = false, shaping = true }) {
   const fontSize = fontSizeForCapHeight(font, capHeight);
   const source = uppercase ? text.toLocaleUpperCase('it') : text;
   const lines = [];
   let bbox = null;
   source.split(/\r?\n/).forEach((line, i) => {
     if (!line.trim()) return;
+    if (!shaping) {
+      const { commands, box } = unshapedPath(font, line, i * lineHeight * fontSize, fontSize, tracking);
+      lines.push({ d: pathData(commands), bbox: box });
+      bbox = bbox ? union(bbox, box) : box;
+      return;
+    }
     const path = font.getPath(line, 0, i * lineHeight * fontSize, fontSize, {
       kerning: true,
       letterSpacing: tracking,

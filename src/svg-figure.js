@@ -524,12 +524,12 @@ export function buildStemmaFigure(figure, diameter, { paint, detail }) {
 
 // ---------- the Numero ----------
 
-// The number set in `font` as large as fits `box` (mm): as tall as the box, or narrower when it
+// The number set in `font` (Instrument Serif) as large as fits `box` (mm): as tall as the box, or narrower when it
 // would be wider, centred on it. → { d, bbox } already in place.
 export function fitNumber(font, label, box) {
-  const probe = layoutText(font, label, { capHeight: box.height, tracking: 0 }).bbox;
+  const probe = layoutText(font, label, { capHeight: box.height, tracking: 0, shaping: false }).bbox;
   const k = Math.min(box.height / (probe.y2 - probe.y1), box.width / (probe.x2 - probe.x1));
-  const { lines, bbox: b } = layoutText(font, label, { capHeight: box.height * k, tracking: 0 });
+  const { lines, bbox: b } = layoutText(font, label, { capHeight: box.height * k, tracking: 0, shaping: false });
   const dx = box.x + box.width / 2 - (b.x1 + b.x2) / 2;
   const dy = box.y + box.height / 2 - (b.y1 + b.y2) / 2;
   return {
@@ -549,7 +549,7 @@ export function buildNumeroFigure(figure, diameter, label, { fonts, paint, detai
   const cx = core.bounds.x + core.bounds.width / 2;
   const cy = core.bounds.y + core.bounds.height / 2;
   const { box } = figure.slot;
-  const number = fitNumber(fonts.mono, label, { x: (box.x - cx) * s, y: (box.y - cy) * s, width: box.width * s, height: box.height * s });
+  const number = fitNumber(fonts.serif, label, { x: (box.x - cx) * s, y: (box.y - cy) * s, width: box.width * s, height: box.height * s });
   const thumbnail = detail === 'thumbnail';
   const tolerance = (thumbnail ? THUMBNAIL_TOLERANCE_MM : RING_TOLERANCE_MM) / s;
   const digits = thumbnail ? 1 : Math.min(4, Math.max(1, Math.ceil(Math.log10(s / 0.01))));
