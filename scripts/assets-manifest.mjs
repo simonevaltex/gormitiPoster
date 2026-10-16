@@ -1,4 +1,4 @@
-// The list of Simone's artwork in public/assets (gormiti/ and stemmi/), for the browser (which
+// The list of Simone's artwork in public/assets (gormiti/, stemmi/, numero/), for the browser (which
 // can't list a folder).
 // In development it is served live at /assets/manifest.json, so a new SVG shows up on reload;
 // the build writes the same file into dist. The list itself needs no editing: drop the SVG in
@@ -69,7 +69,15 @@ export function scanAssets(assetsDir, warn = console.warn) {
       return { id, name: figureName(file), file: `gormiti/${file}`, ...(nome && { nome }), ...(alias && { alias }), ...(popolo && { popolo }) };
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'it'));
-  return { gormiti, stemmi: scanStemmi(join(assetsDir, 'stemmi')) };
+  return { gormiti, stemmi: scanStemmi(join(assetsDir, 'stemmi')), numero: scanNumero(join(assetsDir, 'numero')) };
+}
+
+// The badge of the Numero: one SVG in assets/numero, whatever its name (numero.svg if there are
+// more). Its "numero" box is read by the browser (see figures.js).
+function scanNumero(dir) {
+  const files = svgFiles(dir).sort((a, b) => a.localeCompare(b, 'it'));
+  const file = files.find((f) => f.toLowerCase() === 'numero.svg') ?? files[0];
+  return file ? `numero/${file}` : null;
 }
 
 // "stemmaAria.svg", "stemma-aria.svg", "Aria.svg" → the popolo "aria". One crest per popolo.

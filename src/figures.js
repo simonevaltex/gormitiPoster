@@ -1,5 +1,5 @@
 // Loads Simone's artwork listed in assets/manifest.json: the Gormiti figures (id → figure) and the
-// crests (popolo → figure). read(path) → Promise<string>, with paths relative to assets/ (fetch in
+// crests (popolo → figure), and the Numero badge. read(path) → Promise<string>, with paths relative to assets/ (fetch in
 // the browser, the disk in tests). A file that can't be read or drawn is skipped with a warning:
 // one broken SVG never stops the app.
 import { parseFigureSvg } from './svg-figure.js';
@@ -25,10 +25,28 @@ export async function loadAssets(read) {
   try {
     manifest = JSON.parse(await read('manifest.json'));
   } catch {
-    return { figures: new Map(), stemmi: new Map() };
+    return { figures: new Map(), stemmi: new Map(), numero: null };
   }
-  const [figures, stemmi] = await Promise.all([loadList(manifest.gormiti, read, 'id'), loadList(manifest.stemmi, read, 'popolo')]);
-  return { figures, stemmi };
+  const [figures, stemmi, numero] = await Promise.all([
+    loadList(manifest.gormiti, read, 'id'),
+    loadList(manifest.stemmi, read, 'popolo'),
+    loadNumero(manifest.numero, read),
+  ]);
+  return { figures, stemmi, numero };
+}
+
+// The Numero badge needs its "numero" box; without it the star placeholder stays.
+async function loadNumero(file, read) {
+  if (!file) return null;
+  try {
+    const figure = parseFigureSvg(await read(file), { slot: 'numero' });
+    if (!figure.slot) throw new Error('manca la forma chiamata «numero», il posto del numero');
+    if (figure.unsupported.length) console.warn(`${file}: ignorati ${figure.unsupported.join(', ')}`);
+    return { file, ...figure };
+  } catch (err) {
+    console.warn(`${file}: badge del numero non caricato (${err.message})`);
+    return null;
+  }
 }
 
 export const loadFigures = async (read) => (await loadAssets(read)).figures;

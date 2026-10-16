@@ -34,14 +34,14 @@ function cropMarks(bleed, slug, paint) {
 
 export function composeSheetSvg(
   recipe,
-  { fonts, figures, stemmi, paint, cropMarks: withMarks = false, slug = EXPORT.slug, idPrefix = 'sheet', posterNumber = recipe.number, detail },
+  { fonts, figures, stemmi, numero, paint, cropMarks: withMarks = false, slug = EXPORT.slug, idPrefix = 'sheet', posterNumber = recipe.number, detail },
 ) {
   const bleed = recipe.bleed;
   const s = withMarks ? slug : 0;
   const width = A3.width + 2 * (bleed + s);
   const height = A3.height + 2 * (bleed + s);
   const origin = -(bleed + s);
-  const ctx = { fonts, figures, stemmi, paint, posterNumber, detail };
+  const ctx = { fonts, figures, stemmi, numero, paint, posterNumber, detail };
   const elements = recipe.elements
     .map((el) => {
       const built = buildElement(el.type, el.params, ctx);

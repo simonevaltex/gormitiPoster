@@ -8,8 +8,8 @@ const PT_PER_MM = 72 / 25.4;
 
 export const exportFileName = (number, ext) => `gormiti-poster-${String(number).padStart(3, '0')}.${ext}`;
 
-const exportSvgMarkup = (recipe, { fonts, figures, stemmi, cropMarks }) =>
-  composeSheetSvg(recipe, { fonts, figures, stemmi, paint: exportPaint(recipe.colors), cropMarks, idPrefix: 'export' });
+const exportSvgMarkup = (recipe, { fonts, figures, stemmi, numero, cropMarks }) =>
+  composeSheetSvg(recipe, { fonts, figures, stemmi, numero, paint: exportPaint(recipe.colors), cropMarks, idPrefix: 'export' });
 
 export function exportSvg(recipe, options) {
   const { svg } = exportSvgMarkup(recipe, options);
