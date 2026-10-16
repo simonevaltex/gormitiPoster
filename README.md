@@ -112,17 +112,21 @@ file (`sommoLuminescente.svg` o `sommo-luminescente.svg` → «Sommo Luminescent
 browser (`assets/manifest.json`) si genera da solo, in sviluppo e nella build: non va scritto a mano.
 L'ultima voce del menu resta il segnaposto generato dal nome.
 
-Il **Nome** e l'**Alias** di ogni Gormita si scrivono in `public/assets/gormiti/nomi.json`, una riga
-per figura, con il nome del file (con o senza `.svg`):
+Il **Nome**, l'**Alias** e il **popolo** di ogni Gormita si scrivono in
+`public/assets/gormiti/nomi.json`, una riga per figura, con il nome del file (con o senza `.svg`).
+Il popolo è uno di `aria`, `foresta`, `luce`, `mare`, `tenebre`, `terra`, `vulcano`:
 
 ```json
 {
-  "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo" }
+  "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo", "popolo": "luce" }
 }
 ```
 
 Scegliendo la figura nel menu, i campi dei tipi Nome e Alias si riempiono con questi testi, che si
-possono poi cambiare prima di premere Genera. All'avvio valgono quelli della prima figura. Per
+possono poi cambiare prima di premere Genera. Popolo e Stemma invece si fissano sul popolo della
+figura e il loro menu si blocca; se sul foglio resta un Popolo o uno Stemma di un altro popolo
+(generato prima di cambiare figura), salvare ed esportare si fermano con un messaggio. Un popolo
+scritto male viene ignorato con un avviso. All'avvio valgono i dati della prima figura. Per
 andare a capo si scrive `\n` (`"Il grande\nsaggio"`). Una figura che non è nel file, o il
 segnaposto, lascia i campi come sono; se il file non è un JSON valido viene ignorato, con un avviso
 nel terminale di `npm run dev`.
