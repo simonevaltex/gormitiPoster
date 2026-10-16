@@ -2,12 +2,15 @@
 // can't list a folder).
 // In development it is served live at /assets/manifest.json, so a new SVG shows up on reload;
 // the build writes the same file into dist. The list itself needs no editing: drop the SVG in
-// the folder. Only the Nome and Alias of each Gormita are written by hand, in gormiti/nomi.json.
+// the folder. Only the Nome, Alias and popolo of each Gormita are written by hand, in
+// gormiti/nomi.json.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { POPOLI } from '../src/popoli.js';
 
-// { "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo" } }, keyed by file name with
-// or without .svg. Choosing the figure in Genera fills the Nome and Alias fields with them.
+// { "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo", "popolo": "luce" } }, keyed
+// by file name with or without .svg. Choosing the figure in Genera fills the Nome and Alias fields
+// and fixes Popolo and Stemma to its popolo.
 export const TEXTS_FILE = 'nomi.json';
 
 // "sommoLuminescente.svg", "sommo-luminescente.svg", "Sommo Luminescente.svg" → "Sommo Luminescente".
@@ -58,7 +61,12 @@ export function scanAssets(assetsDir, warn = console.warn) {
       const t = texts[file] ?? texts[id];
       const nome = nonEmpty(t?.nome);
       const alias = nonEmpty(t?.alias);
-      return { id, name: figureName(file), file: `gormiti/${file}`, ...(nome && { nome }), ...(alias && { alias }) };
+      let popolo = nonEmpty(t?.popolo)?.toLowerCase();
+      if (popolo && !POPOLI.some((p) => p.id === popolo)) {
+        warn(`gormiti/${TEXTS_FILE}: il popolo «${t.popolo}» di ${id} non esiste (${POPOLI.map((p) => p.id).join(', ')})`);
+        popolo = undefined;
+      }
+      return { id, name: figureName(file), file: `gormiti/${file}`, ...(nome && { nome }), ...(alias && { alias }), ...(popolo && { popolo }) };
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'it'));
   return { gormiti, stemmi: scanStemmi(join(assetsDir, 'stemmi')) };

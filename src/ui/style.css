@@ -283,6 +283,19 @@ input[type='color']::-moz-color-swatch {
   cursor: pointer;
 }
 
+/* Locked (the Gormita fixes the popolo): dashed like a disabled button, never greyed. */
+.select select:disabled {
+  border-style: dashed;
+  color: var(--inchiostro);
+  background: var(--carta);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.select:has(select:disabled)::after {
+  display: none;
+}
+
 .select::after {
   content: '';
   position: absolute;

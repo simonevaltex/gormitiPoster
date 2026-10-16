@@ -112,15 +112,30 @@ function gravitySection({ store, model, tools }) {
 function typeFields(type, store, model, figures) {
   const p = store.state.genera.params[type];
   const set = (key) => (v) => (p[key] = v);
+  // The chosen Gormita figure fixes the popolo of Popolo and Stemma (see chooseFigure).
+  const popoloField = () => {
+    const field = selectField({ label: 'Popolo', options: popoloOptions, value: p.popolo, onChange: set('popolo') });
+    const hint = h('p', { class: 'hint' });
+    const refresh = () => {
+      const figure = figures.get(store.state.genera.params.gormita.figure);
+      field.set(p.popolo);
+      field.select.disabled = Boolean(figure?.popolo);
+      hint.hidden = !figure?.popolo;
+      hint.textContent = figure?.popolo ? `Fissato da ${figure.name}` : '';
+    };
+    store.subscribe((t) => t === 'genera' && refresh());
+    refresh();
+    return [field.field, hint];
+  };
   switch (type) {
     case 'popolo':
       return [
-        selectField({ label: 'Popolo', options: popoloOptions, value: p.popolo, onChange: set('popolo') }).field,
+        ...popoloField(),
         rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 200, step: 0.5, onChange: set('capHeight') }).field,
       ];
     case 'stemma':
       return [
-        selectField({ label: 'Popolo', options: popoloOptions, value: p.popolo, onChange: set('popolo') }).field,
+        ...popoloField(),
         rangeField({ label: 'Diametro', unit: 'mm', value: p.diameter, min: 5, max: 297, step: 0.5, onChange: set('diameter') }).field,
       ];
     case 'gormita': {
@@ -138,7 +153,7 @@ function typeFields(type, store, model, figures) {
         onChange: (v) => {
           chooseFigure(store.state.genera.params, figures.get(v));
           showName();
-          store.emit('genera'); // Nome and Alias now hold the figure's texts
+          store.emit('genera'); // Nome, Alias and the popolo now follow the figure
         },
       });
       return [

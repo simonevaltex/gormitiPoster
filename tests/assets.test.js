@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { figureName, scanAssets, stemmaPopolo } from '../scripts/assets-manifest.mjs';
-import { loadFigures, loadAssets, chooseFigure } from '../src/figures.js';
+import { loadFigures, loadAssets, chooseFigure, popoloConflict } from '../src/figures.js';
 import { defaultParams } from '../src/elements/index.js';
 
 const BLOCK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect width="100" height="50"/></svg>';
@@ -89,6 +89,46 @@ it('choosing a figure fills Nome and Alias with its texts; the placeholder, or a
   expect(fields()).toEqual(['senzaTesti', 'Cambiato', 'Sommo']);
   chooseFigure(params, undefined); // Segnaposto (dal nome)
   expect(fields()).toEqual(['', 'Cambiato', 'Sommo']);
+});
+
+it('nomi.json can tie a figure to its popolo; a popolo that does not exist is reported and ignored', () => {
+  const dir = assetsDir({
+    'sommoLuminescente.svg': BLOCK,
+    'furiaCieca.svg': BLOCK,
+    'nomi.json': JSON.stringify({
+      sommoLuminescente: { nome: 'Luminescente', alias: 'Sommo', popolo: ' Luce ' },
+      furiaCieca: { nome: 'Furia', alias: 'Cieca', popolo: 'Fuoco' },
+    }),
+  });
+  const warn = vi.fn();
+  const { gormiti } = scanAssets(dir, warn);
+  expect(gormiti.map((g) => [g.id, g.popolo])).toEqual([
+    ['furiaCieca', undefined],
+    ['sommoLuminescente', 'luce'],
+  ]);
+  expect(warn).toHaveBeenCalledOnce();
+  expect(warn.mock.calls[0][0]).toContain('Fuoco');
+});
+
+it('a figure with a popolo sets the popolo of Popolo and Stemma too', () => {
+  const params = defaultParams();
+  chooseFigure(params, { id: 'sommoLuminescente', nome: 'Luminescente', alias: 'Sommo', popolo: 'luce' });
+  expect([params.popolo.popolo, params.stemma.popolo]).toEqual(['luce', 'luce']);
+  chooseFigure(params, { id: 'senzaPopolo' });
+  expect([params.popolo.popolo, params.stemma.popolo]).toEqual(['luce', 'luce']);
+});
+
+it('a Popolo or Stemma of another popolo than the Gormita on the sheet is a conflict', () => {
+  const figures = new Map([
+    ['sommoLuminescente', { id: 'sommoLuminescente', name: 'Sommo Luminescente', popolo: 'luce' }],
+    ['senzaPopolo', { id: 'senzaPopolo', name: 'Senza Popolo' }],
+  ]);
+  const el = (type, params) => ({ type, params });
+  const sommo = el('gormita', { figure: 'sommoLuminescente' });
+  expect(popoloConflict([sommo, el('popolo', { popolo: 'luce' }), el('stemma', { popolo: 'luce' })], figures)).toBeNull();
+  expect(popoloConflict([el('stemma', { popolo: 'aria' }), sommo], figures)).toEqual({ figure: 'Sommo Luminescente', popolo: 'luce' });
+  expect(popoloConflict([el('gormita', { figure: 'senzaPopolo' }), el('stemma', { popolo: 'aria' })], figures)).toBeNull();
+  expect(popoloConflict([el('gormita', { figure: '', name: 'Gormita' }), el('popolo', { popolo: 'mare' })], figures)).toBeNull();
 });
 
 it('loads the figures of the manifest; a broken file is skipped with a warning', async () => {

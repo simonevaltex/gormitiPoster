@@ -1,4 +1,4 @@
 {
-  "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo" },
+  "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo", "popolo": "luce" },
   "furiaCieca": { "nome": "Furia", "alias": "Cieca" }
 }

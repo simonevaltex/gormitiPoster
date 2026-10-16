@@ -80,7 +80,7 @@ export function selectField({ label, options, value, onChange }) {
     options.map((o) => h('option', { value: o.value, selected: o.value === value }, o.label)),
   );
   const field = h('label', { class: 'field' }, h('span', { class: 'label' }, label), h('span', { class: 'select' }, select));
-  return { field, set: (v) => (select.value = v) };
+  return { field, select, set: (v) => (select.value = v) };
 }
 
 export function checkboxField({ label, checked, onChange }) {

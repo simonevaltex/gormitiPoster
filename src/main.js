@@ -1,6 +1,7 @@
 import './ui/style.css';
 import { loadFonts } from './fonts.js';
-import { loadAssets, chooseFigure } from './figures.js';
+import { loadAssets, chooseFigure, popoloConflict } from './figures.js';
+import { popoloById } from './popoli.js';
 import { createStore } from './state.js';
 import { createPhysics } from './physics.js';
 import { createModel } from './model.js';
@@ -33,7 +34,7 @@ const [fonts, { figures, stemmi }] = await Promise.all([
 const store = createStore();
 const s = store.state;
 s.colors = loadStoredColors(s.colors);
-// Genera starts on the first of Simone's figures, with its Nome and Alias, when there is one.
+// Genera starts on the first of Simone's figures, with its Nome, Alias and popolo, when there is one.
 if (figures.size) chooseFigure(s.genera.params, figures.values().next().value);
 const physics = createPhysics();
 const model = createModel({ store, physics, fonts, figures, stemmi });
@@ -66,8 +67,18 @@ const archive = createArchive({
 // Save and export need every element type on the sheet; otherwise say what is missing.
 function complete(action) {
   const missing = model.missingTypes();
-  if (missing.length) showStatus(`Per ${action} mancano: ${missing.join(', ')}`, 6000);
-  return missing.length === 0;
+  if (missing.length) {
+    showStatus(`Per ${action} mancano: ${missing.join(', ')}`, 6000);
+    return false;
+  }
+  // The Gormita's popolo (gormiti/nomi.json) rules Popolo and Stemma.
+  const conflict = popoloConflict(s.elements, figures);
+  if (conflict) {
+    const { name, article } = popoloById(conflict.popolo);
+    showStatus(`${conflict.figure} è del Popolo ${article}${article.endsWith('’') ? '' : ' '}${name}: Popolo e Stemma devono essere di quel popolo`, 6000);
+    return false;
+  }
+  return true;
 }
 
 createHeader({

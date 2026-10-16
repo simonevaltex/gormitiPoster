@@ -33,10 +33,25 @@ export async function loadAssets(read) {
 
 export const loadFigures = async (read) => (await loadAssets(read)).figures;
 
-// Choosing a figure in Genera also fills Nome and Alias with its texts (gormiti/nomi.json).
-// A figure without texts, or the placeholder (no figure), leaves them as they are.
+// Choosing a figure in Genera also fills Nome and Alias with its texts and sets Popolo and Stemma
+// to its popolo (gormiti/nomi.json). What the figure doesn't have, or the placeholder (no figure),
+// leaves the fields as they are.
 export function chooseFigure(params, figure) {
   params.gormita.figure = figure?.id ?? '';
   if (figure?.nome) params.nome.text = figure.nome;
   if (figure?.alias) params.testo.text = figure.alias;
+  if (figure?.popolo) params.popolo.popolo = params.stemma.popolo = figure.popolo;
+}
+
+// A Gormita figure belongs to one popolo: a Popolo or Stemma block of another popolo on the same
+// sheet is a conflict, which stops saving and exporting. → { figure: name, popolo } or null.
+export function popoloConflict(elements, figures) {
+  for (const g of elements) {
+    const figure = g.type === 'gormita' ? figures.get(g.params.figure) : null;
+    if (!figure?.popolo) continue;
+    if (elements.some((e) => (e.type === 'popolo' || e.type === 'stemma') && e.params.popolo !== figure.popolo)) {
+      return { figure: figure.name, popolo: figure.popolo };
+    }
+  }
+  return null;
 }
