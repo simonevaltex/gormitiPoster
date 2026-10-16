@@ -176,6 +176,10 @@ await ready();
 // 2 — default sheet, "Sommo Luminescente" falls from the pad point and rests on the segment, upright
 const initial = await state('s => s.attractors');
 const seg = initial[0];
+// Simone's figures fix Nome and Alias: the placeholder frees them to type a text.
+await page.getByRole('radio', { name: 'Gormita' }).click();
+await page.getByLabel('Figura').selectOption('');
+await page.getByRole('radio', { name: 'Alias' }).click();
 await page.getByLabel('Alias', { exact: true }).fill('Sommo Luminescente');
 await page.getByLabel('Altezza maiuscole (valore)').filter({ visible: true }).fill('22');
 const pad = page.locator('svg.pad');
@@ -386,6 +390,7 @@ await clearSheet();
 await deleteAllAttractors();
 await addSegment({ x: 15, y: 405 }, { x: 282, y: 405 });
 await page.getByRole('radio', { name: 'Gormita' }).click();
+await page.getByLabel('Figura').selectOption({ index: 0 }); // a real figure: it fixes popolo, Nome and Alias
 await setSpawn(148.5, 120);
 await generate();
 await page.getByRole('radio', { name: 'Numero' }).click();
