@@ -212,8 +212,9 @@ il file dà solo il disegno attorno.
 - File › Esporta › Esporta come › SVG, con «ID oggetto: Nomi dei livelli», così il rettangolo arriva
   con il nome `numero`.
 
-Il **Diametro** del tipo Numero è il lato più lungo del badge. Il sito non aggiunge contorni e per
-gli urti conta la sagoma esterna. Senza file, o se manca il rettangolo `numero` (avviso in console),
+Il **Diametro** del tipo Numero è il lato più lungo della **parte nera** del badge, e per gli urti
+conta solo quella: le parti bianche attorno (il fregio) sono decorazione, escono dal Diametro e
+possono passare sopra gli altri elementi come carta. Il sito non aggiunge contorni. Senza file, o se manca il rettangolo `numero` (avviso in console),
 resta il badge a stella.
 
 ## Fase 2
