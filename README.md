@@ -214,7 +214,8 @@ il file dà solo il disegno attorno.
 
 Il **Diametro** del tipo Numero è il lato più lungo della **parte nera** del badge, e per gli urti
 conta solo quella: le parti bianche attorno (il fregio) sono decorazione, escono dal Diametro e
-possono passare sopra gli altri elementi come carta. Il sito non aggiunge contorni. Senza file, o se manca il rettangolo `numero` (avviso in console),
+possono passare sopra gli altri elementi come carta. Attorno a tutto il disegno, bianchi compresi,
+il sito disegna la linea d'inchiostro di Nome e delle figure (`OUTLINE_MM`, 0,5 mm). Senza file, o se manca il rettangolo `numero` (avviso in console),
 resta il badge a stella.
 
 ## Fase 2

@@ -538,8 +538,9 @@ export function fitNumber(font, label, box) {
   };
 }
 
-// Simone's badge and the poster number in the "numero" box, in the box's colour. No rings: the
-// badge is drawn whole in the file. Size and collisions follow its ink part, centred on (0, 0),
+// Simone's badge and the poster number in the "numero" box, in the box's colour. Around the whole
+// drawing, white parts included, the site draws the ink outline of Nome and the figures (the file
+// has its own paper band). Size and collisions follow its ink part, centred on (0, 0),
 // the larger side exactly `diameter`; paper flourishes around it are decoration that may lie over
 // other blocks. The collision shape doesn't depend on the number.
 export function buildNumeroFigure(figure, diameter, label, { fonts, paint, detail }) {
@@ -549,8 +550,12 @@ export function buildNumeroFigure(figure, diameter, label, { fonts, paint, detai
   const cy = core.bounds.y + core.bounds.height / 2;
   const { box } = figure.slot;
   const number = fitNumber(fonts.mono, label, { x: (box.x - cx) * s, y: (box.y - cy) * s, width: box.width * s, height: box.height * s });
+  const thumbnail = detail === 'thumbnail';
+  const tolerance = (thumbnail ? THUMBNAIL_TOLERANCE_MM : RING_TOLERANCE_MM) / s;
+  const digits = thumbnail ? 1 : Math.min(4, Math.max(1, Math.ceil(Math.log10(s / 0.01))));
+  const line = `<path d="${ringOutline(figure, OUTLINE_MM / s, tolerance, digits)}" ${paint({ fill: 'ink' })}/>`;
   const markup =
-    `<g transform="translate(${fmt(-cx * s)} ${fmt(-cy * s)}) scale(${s})">${drawingMarkup(figure, s, paint, detail)}</g>` +
+    `<g transform="translate(${fmt(-cx * s)} ${fmt(-cy * s)}) scale(${s})">${line}${drawingMarkup(figure, s, paint, detail)}</g>` +
     `<path d="${number.d}" ${paint({ fill: figure.slot.paint })}/>`;
   const outer = core.hull.map((p) => ({ x: (p.x - cx) * s, y: (p.y - cy) * s }));
   return { markup, collisionPolygon: simplifyPolygon(outer, 0.02, 40), bounds: boundsOf(outer) };

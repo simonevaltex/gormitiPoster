@@ -8,6 +8,8 @@ import { scanAssets } from '../scripts/assets-manifest.mjs';
 import { loadAssets } from '../src/figures.js';
 import { screenPaint, exportPaint } from '../src/paint.js';
 import { convexHull, pointInPolygon } from '../src/geometry.js';
+import svgpath from 'svgpath';
+import { OUTLINE_MM } from '../src/constants.js';
 import { loadFontsFromDisk } from './helpers.js';
 
 // A badge like Illustrator writes it: a black disc and, named "numero", the white box of the number.
@@ -58,7 +60,6 @@ it("numero from Simone's SVG: as wide as the Diametro, the poster number in its 
   expect(a.collisionPolygon).toEqual(b.collisionPolygon);
   expect(convexHull(a.collisionPolygon)).toHaveLength(a.collisionPolygon.length);
   expect(pointInPolygon(a.centre, a.collisionPolygon)).toBe(true);
-  expect(a.markup).not.toContain('stroke'); // no rings around the badge
   const exported = buildElement('numero', { diameter: 30 }, { ...ctx(7), paint: exportPaint({ carta: '#808080', inchiostro: '#ff6600' }) });
   expect(exported.markup).toContain('fill="#808080"'); // the number, paper like its box
   expect(exported.markup).not.toContain('class=');
@@ -75,6 +76,22 @@ it('Diametro and collisions follow the black badge: a white flourish around it i
   expect(a.bounds).toEqual(b.bounds);
   expect(a.collisionPolygon).toEqual(b.collisionPolygon);
   expect(a.markup).toContain(fitNumber(fonts.mono, '007', { x: -7.5, y: -4, width: 15, height: 8 }).d);
+});
+
+it('an ink line as thick as Nome\'s goes around the whole badge, white flourish included, under the drawing', () => {
+  const flourished = BADGE.replace('<circle cx="30"', '<path class="st0" d="M-90,-120L35,5L5,35Z"/><circle cx="30"');
+  const numero = { file: 'numero/numero.svg', ...parseFigureSvg(flourished, { slot: 'numero' }) };
+  const { markup } = buildElement('numero', { diameter: 30 }, { fonts, paint: screenPaint, posterNumber: 7, numero });
+  const [, d, attrs] = markup.match(/<path d="([^"]+)" ([^/]*)\/>/); // the first path: the line
+  expect(attrs).toBe('class="fi"');
+  expect(markup.indexOf(d)).toBeLessThan(markup.indexOf('<g class="fp">')); // under the drawing
+  const xs = [];
+  const ys = [];
+  svgpath(d).abs().iterate((seg) => seg[0] !== 'Z' && (xs.push(seg.at(-2) * 0.5), ys.push(seg.at(-1) * 0.5)));
+  // Disc and flourish span 150 × 180 drawing units, 75 × 90 mm at this size; plus the line.
+  expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(75 + 2 * OUTLINE_MM, 1);
+  expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(90 + 2 * OUTLINE_MM, 1);
+  expect(markup).not.toContain('stroke'); // a filled shape, not a stroke
 });
 
 it('the badge SVG is any SVG in assets/numero (numero.svg first); none → no entry', () => {
