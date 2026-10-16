@@ -1,8 +1,13 @@
 // The list of Simone's artwork in public/assets, for the browser (which can't list a folder).
 // In development it is served live at /assets/manifest.json, so a new SVG shows up on reload;
-// the build writes the same file into dist. Nothing to edit by hand: drop the SVG in the folder.
-import { readdirSync } from 'node:fs';
+// the build writes the same file into dist. The list itself needs no editing: drop the SVG in
+// the folder. Only the Nome and Alias of each Gormita are written by hand, in gormiti/nomi.json.
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+// { "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo" } }, keyed by file name with
+// or without .svg. Choosing the figure in Genera fills the Nome and Alias fields with them.
+export const TEXTS_FILE = 'nomi.json';
 
 // "sommoLuminescente.svg", "sommo-luminescente.svg", "Sommo Luminescente.svg" → "Sommo Luminescente".
 export function figureName(file) {
@@ -23,10 +28,37 @@ function svgFiles(dir) {
   }
 }
 
+// A missing file means no texts; a broken one is reported and ignored, never losing the figures.
+function readTexts(path, warn) {
+  let raw;
+  try {
+    raw = readFileSync(path, 'utf8');
+  } catch {
+    return {};
+  }
+  try {
+    const texts = JSON.parse(raw);
+    return texts && typeof texts === 'object' ? texts : {};
+  } catch (err) {
+    warn(`gormiti/${TEXTS_FILE} non è un JSON valido, nomi e alias ignorati (${err.message})`);
+    return {};
+  }
+}
+
+const nonEmpty = (v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+
 // The id is the file name: recipes store it, so renaming a file loses it in saved posters.
-export function scanAssets(assetsDir) {
-  const gormiti = svgFiles(join(assetsDir, 'gormiti'))
-    .map((file) => ({ id: file.replace(/\.svg$/i, ''), name: figureName(file), file: `gormiti/${file}` }))
+export function scanAssets(assetsDir, warn = console.warn) {
+  const dir = join(assetsDir, 'gormiti');
+  const texts = readTexts(join(dir, TEXTS_FILE), warn);
+  const gormiti = svgFiles(dir)
+    .map((file) => {
+      const id = file.replace(/\.svg$/i, '');
+      const t = texts[file] ?? texts[id];
+      const nome = nonEmpty(t?.nome);
+      const alias = nonEmpty(t?.alias);
+      return { id, name: figureName(file), file: `gormiti/${file}`, ...(nome && { nome }), ...(alias && { alias }) };
+    })
     .sort((a, b) => a.name.localeCompare(b.name, 'it'));
   return { gormiti };
 }
@@ -43,11 +75,12 @@ export function assetsManifest() {
         if (req.url.split('?')[0] !== `${server.config.base}assets/manifest.json`) return next();
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Cache-Control', 'no-store');
-        res.end(JSON.stringify(scanAssets(dir)));
+        res.end(JSON.stringify(scanAssets(dir, (msg) => server.config.logger.warn(msg))));
       });
     },
     generateBundle() {
-      this.emitFile({ type: 'asset', fileName: 'assets/manifest.json', source: `${JSON.stringify(scanAssets(dir), null, 2)}\n` });
+      const manifest = scanAssets(dir, (msg) => this.warn(msg));
+      this.emitFile({ type: 'asset', fileName: 'assets/manifest.json', source: `${JSON.stringify(manifest, null, 2)}\n` });
     },
   };
 }

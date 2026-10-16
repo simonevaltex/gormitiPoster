@@ -24,3 +24,11 @@ export async function loadFigures(read) {
   );
   return new Map(entries.filter(Boolean));
 }
+
+// Choosing a figure in Genera also fills Nome and Alias with its texts (gormiti/nomi.json).
+// A figure without texts, or the placeholder (no figure), leaves them as they are.
+export function chooseFigure(params, figure) {
+  params.gormita.figure = figure?.id ?? '';
+  if (figure?.nome) params.nome.text = figure.nome;
+  if (figure?.alias) params.testo.text = figure.alias;
+}

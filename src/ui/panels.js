@@ -4,6 +4,7 @@ import { A3, DEFAULTS, DEFAULT_SETTINGS } from '../constants.js';
 import { POPOLI } from '../popoli.js';
 import { createPad } from '../pad.js';
 import { ELEMENT_TYPES } from '../elements/index.js';
+import { chooseFigure } from '../figures.js';
 import { randomPoint, randomSegment } from '../attractors.js';
 import { h, numberField, rangeField, segmented, selectField, checkboxField } from './dom.js';
 import { confirmButton } from './inline-confirm.js';
@@ -135,8 +136,9 @@ function typeFields(type, store, model, figures) {
         options: [...options, { value: '', label: 'Segnaposto (dal nome)' }],
         value: p.figure,
         onChange: (v) => {
-          p.figure = v;
+          chooseFigure(store.state.genera.params, figures.get(v));
           showName();
+          store.emit('genera'); // Nome and Alias now hold the figure's texts
         },
       });
       return [
@@ -150,6 +152,7 @@ function typeFields(type, store, model, figures) {
       const label = type === 'nome' ? 'Nome' : 'Alias';
       const text = h('textarea', { rows: 3, value: p.text, autocomplete: 'off', spellcheck: 'false', 'aria-label': label });
       text.addEventListener('input', () => (p.text = text.value));
+      store.subscribe((t) => t === 'genera' && (text.value = p.text));
       return [
         h('label', { class: 'field' }, h('span', { class: 'label' }, `${label} (Invio = nuova riga)`), text),
         rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,

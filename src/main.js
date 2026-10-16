@@ -1,6 +1,6 @@
 import './ui/style.css';
 import { loadFonts } from './fonts.js';
-import { loadFigures } from './figures.js';
+import { loadFigures, chooseFigure } from './figures.js';
 import { createStore } from './state.js';
 import { createPhysics } from './physics.js';
 import { createModel } from './model.js';
@@ -33,8 +33,8 @@ const [fonts, figures] = await Promise.all([
 const store = createStore();
 const s = store.state;
 s.colors = loadStoredColors(s.colors);
-// Genera starts on the first of Simone's figures, when there is one.
-if (figures.size) s.genera.params.gormita.figure = figures.keys().next().value;
+// Genera starts on the first of Simone's figures, with its Nome and Alias, when there is one.
+if (figures.size) chooseFigure(s.genera.params, figures.values().next().value);
 const physics = createPhysics();
 const model = createModel({ store, physics, fonts, figures });
 
