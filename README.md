@@ -112,6 +112,21 @@ file (`sommoLuminescente.svg` o `sommo-luminescente.svg` → «Sommo Luminescent
 browser (`assets/manifest.json`) si genera da solo, in sviluppo e nella build: non va scritto a mano.
 L'ultima voce del menu resta il segnaposto generato dal nome.
 
+Il **Nome** e l'**Alias** di ogni Gormita si scrivono in `public/assets/gormiti/nomi.json`, una riga
+per figura, con il nome del file (con o senza `.svg`):
+
+```json
+{
+  "sommoLuminescente": { "nome": "Luminescente", "alias": "Sommo" }
+}
+```
+
+Scegliendo la figura nel menu, i campi dei tipi Nome e Alias si riempiono con questi testi, che si
+possono poi cambiare prima di premere Genera. All'avvio valgono quelli della prima figura. Per
+andare a capo si scrive `\n` (`"Il grande\nsaggio"`). Una figura che non è nel file, o il
+segnaposto, lascia i campi come sono; se il file non è un JSON valido viene ignorato, con un avviso
+nel terminale di `npm run dev`.
+
 Il file contiene **solo il disegno**: i contorni li disegna il sito, uguali su ogni figura
 qualunque sia la larghezza scelta: 2 mm di carta attaccati al disegno (`FIGURE_PAPER_MM` in
 `src/svg-figure.js`), poi una linea d'inchiostro spessa quanto il contorno delle lettere del Nome
@@ -134,8 +149,9 @@ Come preparare il file in Illustrator:
   presentazione».
 
 Il nome del file è anche l'identificativo salvato nei poster: rinominando un file, i poster già
-salvati con quella figura tornano al segnaposto. `npm test` controlla che ogni SVG della cartella
-si legga senza problemi.
+salvati con quella figura tornano al segnaposto (e in `nomi.json` va cambiata anche la sua riga).
+`npm test` controlla che ogni SVG della cartella si legga senza problemi, che abbia nome e alias in
+`nomi.json` e che `nomi.json` non nomini file che non ci sono.
 
 ## Font
 
@@ -162,7 +178,8 @@ src/storage/         adattatore di salvataggio (local.js ora, api.js in futuro)
 src/export.js        PDF e SVG
 src/recipe.js        ricetta → SVG (export e miniature)
 src/ui/              header, pannelli, dialoghi, stile
-scripts/assets-manifest.mjs  elenco delle figure (servito in sviluppo, scritto nella build)
+scripts/assets-manifest.mjs  elenco delle figure con nome e alias (servito in sviluppo, scritto nella build)
+public/assets/gormiti/       gli SVG delle figure e nomi.json
 ```
 
 ## Fase 2
