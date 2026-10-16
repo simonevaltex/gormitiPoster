@@ -180,7 +180,7 @@ function typeFields(type, store, model, figures) {
       store.subscribe((t) => t === 'genera' && refresh());
       refresh();
       return [
-        h('label', { class: 'field' }, h('span', { class: 'label' }, `${label} (Invio = nuova riga)`), text),
+        h('label', { class: 'field' }, text),
         hint,
         rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
       ];
@@ -241,8 +241,7 @@ function generaSection({ store, model, figures }) {
     'Genera',
     type.field,
     ...Object.values(groups),
-    h('div', { class: 'row' }, generate, clear.element),
-    h('p', { class: 'hint' }, 'Cmd/Ctrl+Z toglie l’ultimo blocco'),
+    h('div', { class: 'actions' }, generate, clear.element),
     message,
   );
 }

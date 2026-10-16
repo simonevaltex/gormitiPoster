@@ -95,10 +95,14 @@ export function randomSegment() {
 
 // Pointer on the sheet: click selects an attractor, dragging moves it (a segment's endpoints
 // stretch or rotate it). Every move goes through the model, which wakes the blocks: attractors are live.
-export function bindSheetTools(view, store, model) {
+// A click on empty sheet calls onEmptyClick(point in mm), which generates there; when an attractor
+// was selected, that click only deselects it.
+const CLICK_PX = 4; // farther than this between press and release, it was a drag, not a click
+export function bindSheetTools(view, store, model, { onEmptyClick } = {}) {
   const s = store.state;
   const svg = view.svg;
   let drag = null;
+  let click = null;
   const tolerance = () => HIT_PX / view.pxPerMm();
 
   function select(id) {
@@ -115,13 +119,18 @@ export function bindSheetTools(view, store, model) {
     if (e.button !== 0) return;
     const p = view.toWorld(e.clientX, e.clientY);
     const hit = hitTest(s.attractors, p, tolerance(), s.selectedId);
+    const hadSelection = s.selectedId !== null;
     select(hit?.id ?? null);
-    if (!hit) return;
+    if (!hit) {
+      click = hadSelection ? null : { x: e.clientX, y: e.clientY, p };
+      return;
+    }
     svg.setPointerCapture(e.pointerId);
     drag = { ...hit, start: p, orig: { ...s.attractors.find((a) => a.id === hit.id) } };
   });
 
   svg.addEventListener('pointermove', (e) => {
+    if (click && Math.hypot(e.clientX - click.x, e.clientY - click.y) > CLICK_PX) click = null;
     const p = view.toWorld(e.clientX, e.clientY);
     if (!drag) {
       svg.classList.toggle('over-attractor', !!hitTest(s.attractors, p, tolerance(), s.selectedId));
@@ -130,9 +139,15 @@ export function bindSheetTools(view, store, model) {
     model.updateAttractor(drag.id, dragPatch(drag.part, drag.orig, p.x - drag.start.x, p.y - drag.start.y));
   });
 
-  const end = () => (drag = null);
-  svg.addEventListener('pointerup', end);
-  svg.addEventListener('pointercancel', end);
+  svg.addEventListener('pointerup', (e) => {
+    if (click && Math.hypot(e.clientX - click.x, e.clientY - click.y) <= CLICK_PX) onEmptyClick?.(click.p);
+    click = null;
+    drag = null;
+  });
+  svg.addEventListener('pointercancel', () => {
+    click = null;
+    drag = null;
+  });
 
   window.addEventListener('keydown', (e) => {
     if (isTyping(e)) return;

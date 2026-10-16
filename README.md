@@ -52,6 +52,10 @@ output `dist`). Non servono variabili d'ambiente né backend.
   foto. Annulla torna alla stessa foto, quindi Annulla + Genera con gli stessi valori dà lo stesso
   identico risultato. Se nel frattempo sono cambiati attrattori o impostazioni, Annulla toglie solo
   l'ultimo blocco e il resto continua da dov'è.
+- **Clic sul foglio**: invece di premere Genera si può cliccare sul foglio (o nella fascia attorno):
+  il blocco del tipo scelto parte da lì, come se il punto del pad fosse in quel posto, e il pad lo
+  segue. Un trascinamento non genera, e se c'è un attrattore selezionato il primo clic sul vuoto lo
+  deseleziona soltanto. Cmd/Ctrl+Z toglie l'ultimo blocco.
 - **Colori**: esistono solo `--carta` e `--inchiostro`. Tutto il sito e i poster li usano; gli
   export scrivono gli esadecimali esatti.
 

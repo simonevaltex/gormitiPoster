@@ -860,6 +860,25 @@ textarea:read-only,
   display: contents;
 }
 
+/* Genera and Svuota foglio: two equal buttons side by side, the size of Punto and Linea. */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.actions button {
+  padding: 8px 8px;
+}
+
+.actions .confirm-wrap > button {
+  margin-left: -1px;
+}
+
+.actions .confirm {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
 .confirm {
   display: flex;
   flex-wrap: wrap;

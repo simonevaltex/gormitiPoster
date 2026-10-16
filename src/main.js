@@ -7,7 +7,8 @@ import { createPhysics } from './physics.js';
 import { createModel } from './model.js';
 import { createSheetView } from './sheet-view.js';
 import { bindSheetTools } from './attractors.js';
-import { createPanels, createSheetInfo } from './ui/panels.js';
+import { createPanels, createSheetInfo, MESSAGES } from './ui/panels.js';
+import { spawnBounds } from './pad.js';
 import { createHeader, loadStoredColors } from './ui/header.js';
 import { createArchive } from './archive.js';
 import { createExportDialog } from './ui/export-dialog.js';
@@ -44,7 +45,19 @@ const view = createSheetView(document.getElementById('sheet'), store, {
   onZoom: (percent) => (zoomLabel.textContent = `${percent.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`),
 });
 document.getElementById('fit').addEventListener('click', () => view.fit());
-const tools = bindSheetTools(view, store, model);
+// A click on the sheet generates there what the Genera button would, starting from that point
+// (the pad follows); off the pad's range, nothing happens.
+const tools = bindSheetTools(view, store, model, {
+  onEmptyClick: ({ x, y }) => {
+    const r = spawnBounds(s.bleed);
+    if (x < r.x0 || x > r.x0 + r.w || y < r.y0 || y > r.y0 + r.h) return;
+    s.spawn.x = Math.round(x * 10) / 10;
+    s.spawn.y = Math.round(y * 10) / 10;
+    store.emit('spawn');
+    const result = model.generate();
+    if (!result.ok) showStatus(MESSAGES[result.reason], 4000);
+  },
+});
 createPanels({ root: document.getElementById('panel'), store, model, tools, figures });
 createSheetInfo({ root: document.getElementById('sheet-info'), store, model });
 

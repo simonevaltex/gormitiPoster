@@ -13,6 +13,14 @@ const HIT_PX = 7;
 const MAX_HEIGHT_PX = 400;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+// Where a block may start: the sheet with its bleed and, around it, a band of 20% per side that
+// stands for "off the sheet".
+export function spawnBounds(bleed) {
+  const W = A3.width + 2 * bleed;
+  const H = A3.height + 2 * bleed;
+  return { b: bleed, W, H, x0: -bleed - BAND * W, y0: -bleed - BAND * H, w: W * (1 + 2 * BAND), h: H * (1 + 2 * BAND) };
+}
+
 export function createPad({ store, model, select }) {
   const s = store.state;
   const svg = document.createElementNS(NS, 'svg');
@@ -20,12 +28,7 @@ export function createPad({ store, model, select }) {
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', 'Partenza: trascina il punto per scegliere da dove parte il blocco, trascina gli attrattori per spostarli');
 
-  const bounds = () => {
-    const b = s.bleed;
-    const W = A3.width + 2 * b;
-    const H = A3.height + 2 * b;
-    return { b, W, H, x0: -b - BAND * W, y0: -b - BAND * H, w: W * (1 + 2 * BAND), h: H * (1 + 2 * BAND) };
-  };
+  const bounds = () => spawnBounds(s.bleed);
 
   function setSpawn(patch) {
     const r = bounds();
