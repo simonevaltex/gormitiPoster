@@ -62,14 +62,22 @@ export function chooseFigure(params, figure) {
   if (figure?.popolo) params.popolo.popolo = params.stemma.popolo = figure.popolo;
 }
 
-// A Gormita figure belongs to one popolo: a Popolo or Stemma block of another popolo on the same
-// sheet is a conflict, which stops saving and exporting. → { figure: name, popolo } or null.
-export function popoloConflict(elements, figures) {
+// A Gormita figure fixes its popolo, Nome and Alias (nomi.json): on the same sheet, a Popolo or
+// Stemma of another popolo, or a Nome or Alias with another text, is a conflict, which stops saving
+// and exporting. → { figure: name, field: 'popolo' | 'nome' | 'alias', value: expected } or null.
+export function figureConflict(elements, figures) {
+  const rules = [
+    { field: 'popolo', types: ['popolo', 'stemma'], key: 'popolo' },
+    { field: 'nome', types: ['nome'], key: 'text' },
+    { field: 'alias', types: ['testo'], key: 'text' },
+  ];
   for (const g of elements) {
     const figure = g.type === 'gormita' ? figures.get(g.params.figure) : null;
-    if (!figure?.popolo) continue;
-    if (elements.some((e) => (e.type === 'popolo' || e.type === 'stemma') && e.params.popolo !== figure.popolo)) {
-      return { figure: figure.name, popolo: figure.popolo };
+    if (!figure) continue;
+    for (const { field, types, key } of rules) {
+      if (figure[field] && elements.some((e) => types.includes(e.type) && e.params[key] !== figure[field])) {
+        return { figure: figure.name, field, value: figure[field] };
+      }
     }
   }
   return null;

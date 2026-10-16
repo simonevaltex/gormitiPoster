@@ -1,6 +1,6 @@
 import './ui/style.css';
 import { loadFonts } from './fonts.js';
-import { loadAssets, chooseFigure, popoloConflict } from './figures.js';
+import { loadAssets, chooseFigure, figureConflict } from './figures.js';
 import { popoloById } from './popoli.js';
 import { createStore } from './state.js';
 import { createPhysics } from './physics.js';
@@ -73,11 +73,16 @@ function complete(action) {
     showStatus(`Per ${action} mancano: ${missing.join(', ')}`, 6000);
     return false;
   }
-  // The Gormita's popolo (gormiti/nomi.json) rules Popolo and Stemma.
-  const conflict = popoloConflict(s.elements, figures);
+  // The Gormita's popolo, Nome and Alias (gormiti/nomi.json) rule the other blocks.
+  const conflict = figureConflict(s.elements, figures);
   if (conflict) {
-    const { name, article } = popoloById(conflict.popolo);
-    showStatus(`${conflict.figure} è del Popolo ${article}${article.endsWith('’') ? '' : ' '}${name}: Popolo e Stemma devono essere di quel popolo`, 6000);
+    const { figure, field, value } = conflict;
+    if (field === 'popolo') {
+      const { name, article } = popoloById(value);
+      showStatus(`${figure} è del Popolo ${article}${article.endsWith('’') ? '' : ' '}${name}: Popolo e Stemma devono essere di quel popolo`, 6000);
+    } else {
+      showStatus(`Con ${figure} ${field === 'nome' ? 'il Nome' : 'l’Alias'} è «${value.replace(/\n/g, ' ')}»: rigenera quel blocco`, 6000);
+    }
     return false;
   }
   return true;

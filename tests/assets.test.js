@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { figureName, scanAssets, stemmaPopolo } from '../scripts/assets-manifest.mjs';
-import { loadFigures, loadAssets, chooseFigure, popoloConflict } from '../src/figures.js';
+import { loadFigures, loadAssets, chooseFigure, figureConflict } from '../src/figures.js';
 import { defaultParams } from '../src/elements/index.js';
 
 const BLOCK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect width="100" height="50"/></svg>';
@@ -120,17 +120,20 @@ it('a figure with a popolo sets the popolo of Popolo and Stemma too', () => {
   expect([params.popolo.popolo, params.stemma.popolo]).toEqual(['luce', 'luce']);
 });
 
-it('a Popolo or Stemma of another popolo than the Gormita on the sheet is a conflict', () => {
+it('a Popolo or Stemma of another popolo, or a Nome or Alias other than the figure\'s, is a conflict', () => {
   const figures = new Map([
-    ['sommoLuminescente', { id: 'sommoLuminescente', name: 'Sommo Luminescente', popolo: 'luce' }],
-    ['senzaPopolo', { id: 'senzaPopolo', name: 'Senza Popolo' }],
+    ['sommoLuminescente', { id: 'sommoLuminescente', name: 'Sommo Luminescente', nome: 'Luminescente', alias: 'Sommo', popolo: 'luce' }],
+    ['senzaDati', { id: 'senzaDati', name: 'Senza Dati' }],
   ]);
   const el = (type, params) => ({ type, params });
   const sommo = el('gormita', { figure: 'sommoLuminescente' });
-  expect(popoloConflict([sommo, el('popolo', { popolo: 'luce' }), el('stemma', { popolo: 'luce' })], figures)).toBeNull();
-  expect(popoloConflict([el('stemma', { popolo: 'aria' }), sommo], figures)).toEqual({ figure: 'Sommo Luminescente', popolo: 'luce' });
-  expect(popoloConflict([el('gormita', { figure: 'senzaPopolo' }), el('stemma', { popolo: 'aria' })], figures)).toBeNull();
-  expect(popoloConflict([el('gormita', { figure: '', name: 'Gormita' }), el('popolo', { popolo: 'mare' })], figures)).toBeNull();
+  const right = [sommo, el('popolo', { popolo: 'luce' }), el('stemma', { popolo: 'luce' }), el('nome', { text: 'Luminescente' }), el('testo', { text: 'Sommo' })];
+  expect(figureConflict(right, figures)).toBeNull();
+  expect(figureConflict([el('stemma', { popolo: 'aria' }), sommo], figures)).toEqual({ figure: 'Sommo Luminescente', field: 'popolo', value: 'luce' });
+  expect(figureConflict([sommo, el('nome', { text: 'Altro' })], figures)).toEqual({ figure: 'Sommo Luminescente', field: 'nome', value: 'Luminescente' });
+  expect(figureConflict([sommo, el('testo', { text: 'Sommo\n' })], figures)).toEqual({ figure: 'Sommo Luminescente', field: 'alias', value: 'Sommo' });
+  expect(figureConflict([el('gormita', { figure: 'senzaDati' }), el('stemma', { popolo: 'aria' }), el('nome', { text: 'X' })], figures)).toBeNull();
+  expect(figureConflict([el('gormita', { figure: '', name: 'Gormita' }), el('popolo', { popolo: 'mare' })], figures)).toBeNull();
 });
 
 it('loads the figures of the manifest; a broken file is skipped with a warning', async () => {

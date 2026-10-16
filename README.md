@@ -122,10 +122,11 @@ Il popolo è uno di `aria`, `foresta`, `luce`, `mare`, `tenebre`, `terra`, `vulc
 }
 ```
 
-Scegliendo la figura nel menu, i campi dei tipi Nome e Alias si riempiono con questi testi, che si
-possono poi cambiare prima di premere Genera. Popolo e Stemma invece si fissano sul popolo della
-figura e il loro menu si blocca; se sul foglio resta un Popolo o uno Stemma di un altro popolo
-(generato prima di cambiare figura), salvare ed esportare si fermano con un messaggio. Un popolo
+Scegliendo la figura nel menu, i campi dei tipi Nome e Alias si riempiono con questi testi e Popolo
+e Stemma si fissano sul suo popolo: finché la figura è scelta non si possono cambiare (campi
+tratteggiati, «Fissato da …»; si cambiano solo le misure). Se sul foglio resta un blocco diverso
+(generato prima di cambiare figura, o con il segnaposto), salvare ed esportare si fermano con un
+messaggio che dice quale rigenerare. Un popolo
 scritto male viene ignorato con un avviso. All'avvio valgono i dati della prima figura. Per
 andare a capo si scrive `\n` (`"Il grande\nsaggio"`). Una figura che non è nel file, o il
 segnaposto, lascia i campi come sono; se il file non è un JSON valido viene ignorato, con un avviso

@@ -153,7 +153,7 @@ function typeFields(type, store, model, figures) {
         onChange: (v) => {
           chooseFigure(store.state.genera.params, figures.get(v));
           showName();
-          store.emit('genera'); // Nome, Alias and the popolo now follow the figure
+          store.emit('genera'); // Nome, Alias and the popolo now follow the figure, and lock
         },
       });
       return [
@@ -167,9 +167,21 @@ function typeFields(type, store, model, figures) {
       const label = type === 'nome' ? 'Nome' : 'Alias';
       const text = h('textarea', { rows: 3, value: p.text, autocomplete: 'off', spellcheck: 'false', 'aria-label': label });
       text.addEventListener('input', () => (p.text = text.value));
-      store.subscribe((t) => t === 'genera' && (text.value = p.text));
+      // The chosen Gormita figure fixes the text (see chooseFigure): it can't be edited then.
+      const hint = h('p', { class: 'hint' });
+      const refresh = () => {
+        const figure = figures.get(store.state.genera.params.gormita.figure);
+        const fixed = figure?.[type === 'nome' ? 'nome' : 'alias'];
+        text.value = p.text;
+        text.readOnly = Boolean(fixed);
+        hint.hidden = !fixed;
+        hint.textContent = fixed ? `Fissato da ${figure.name}` : '';
+      };
+      store.subscribe((t) => t === 'genera' && refresh());
+      refresh();
       return [
         h('label', { class: 'field' }, h('span', { class: 'label' }, `${label} (Invio = nuova riga)`), text),
+        hint,
         rangeField({ label: 'Altezza maiuscole', unit: 'mm', value: p.capHeight, min: 3, max: 300, step: 0.5, onChange: set('capHeight') }).field,
       ];
     }
