@@ -13,6 +13,11 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
+In sviluppo l'archivio condiviso gira in locale su PGlite (Postgres in WebAssembly, niente da
+installare), salvato in `.data/pglite` (ignorata da git). Per lavorare sul database vero di Neon,
+metti `DATABASE_URL=…` in `.env.local` (ignorato da git): da lì `npm run dev` legge e scrive
+l'archivio online.
+
 ## Test e verifica
 
 ```bash
@@ -24,15 +29,49 @@ npm run verify     # i 10 criteri di accettazione nel browser (Playwright)
 headless, esporta i PDF e scrive screenshot ed export in `verification-output/` (ignorata da git).
 La prima volta può servire `npx playwright install chromium`.
 
-## Build e deploy su Vercel
+```bash
+npm run verify:build   # la build di produzione come la serve Vercel
+```
+
+`npm run verify:build` costruisce `dist/` e la apre con `vite preview`, che manda gli stessi header
+di `vercel.json` (Content-Security-Policy compresa) e risponde all'API con un archivio vuoto in
+memoria. Controlla header, salvataggio, ricaricamento, export PDF e PNG, copia dei poster locali,
+pulizia delle miniature e console senza errori.
+
+## Messa online (GitHub + Vercel + Neon)
 
 ```bash
 npm run build      # genera dist/
-npm run preview    # prova la build in locale
+npm run preview    # prova la build in locale (con l'API e gli header di vercel.json)
 ```
 
-Su Vercel basta importare il repository: Vite viene riconosciuto da solo (build `npm run build`,
-output `dist`). Non servono variabili d'ambiente né backend.
+Una volta sola:
+
+1. **GitHub**: crea un repository vuoto (anche privato, senza README) e carica `main`:
+   `git remote add origin https://github.com/<utente>/gormiti-poster.git` e poi
+   `git push -u origin main`.
+2. **Vercel**: Add New › Project › importa il repository. Le impostazioni vengono da `vercel.json`
+   (Vite, `npm run build`, `dist`): non cambiare niente e premi Deploy.
+3. **Neon**: nel progetto su Vercel, Storage › Create Database › Neon (piano Free), collegalo al
+   progetto per Production, Preview e Development. Vercel aggiunge da solo `DATABASE_URL`.
+4. **Redeploy** (Deployments › ⋯ › Redeploy) perché la funzione legga la nuova variabile. La tabella
+   `posters` si crea da sola al primo uso.
+5. Apri il sito, scheda Archivio: se in quel browser ci sono poster di prima, il pulsante **Copia
+   nell'archivio condiviso** li porta online (stesso id e numero).
+
+Poi ogni `git push` su `main` ripubblica il sito; gli altri rami diventano anteprime con un loro
+indirizzo (che usano lo stesso database, se l'hai collegato anche a Preview).
+
+Cosa c'è online:
+
+- `api/posters.js`: l'unica funzione (Node), per lista, lettura, salvataggio ed eliminazione.
+  `vercel.json` riscrive `/api/posters/:id` in `/api/posters?id=:id`.
+- Header per tutte le pagine: `X-Robots-Tag: noindex` (con il `<meta name="robots">`, il sito non
+  finisce sui motori di ricerca: lo usa chi ha il link), `Content-Security-Policy` (solo script
+  del sito, niente codice inline), `nosniff`, `Referrer-Policy`.
+- Cache: il codice in `/_app/` ha il nome con l'hash e resta in cache per sempre; i font un giorno;
+  disegni, `assets/manifest.json` e pagina si ricontrollano a ogni visita (default di Vercel), così
+  un SVG cambiato si vede subito dopo il deploy.
 
 ## Come funziona
 
@@ -68,9 +107,22 @@ ogni tipo (Popolo, Stemma, Gormita, Nome, Alias, Numero); altrimenti un messaggi
 **Salva in archivio** (icona segnalibro) aggiunge sempre un nuovo poster con numero = massimo + 1 (i doppioni
 sono ammessi); il badge Numero mostra lo stesso numero.
 
-Oggi i poster stanno in IndexedDB, nel browser (`src/storage/local.js`). Tutto il resto del codice
-usa solo `src/storage/index.js`; per avere l'archivio condiviso su ogni dispositivo basterà
-scrivere `src/storage/api.js` con la stessa interfaccia ed esportarlo da lì:
+L'archivio è **condiviso**: chiunque abbia il link vede gli stessi poster, su ogni dispositivo, e
+può salvare ed eliminare (nessuna password, per scelta). I poster stanno in Postgres (Neon) e il
+sito li raggiunge con `src/storage/api.js`; aprendo la scheda Archivio la lista si rilegge, e prima
+di ogni salvataggio si rilegge il numero più alto, così un poster salvato da un altro dispositivo
+conta. Se l'archivio non risponde, un messaggio lo dice e il foglio continua a funzionare.
+
+Visto che chiunque può scrivere, il server controlla ogni ricetta prima di salvarla
+(`server/recipe-check.js`: forma, numeri, colori esadecimali, dimensione massima 2 MB) e il sito
+ripulisce le miniature con DOMPurify prima di mostrarle. Non c'è modo di recuperare un poster
+eliminato: per una copia di sicurezza, Neon fa il ripristino a un momento passato (sul piano Free
+per poche ore) e si può sempre esportare il PDF.
+
+I poster salvati prima in IndexedDB, nel browser (`src/storage/local.js`), restano lì: la scheda
+Archivio li segnala e li copia online con un clic.
+
+Tutto il resto del codice usa solo `src/storage/index.js`, con questa interfaccia:
 
 ```js
 // Tutte asincrone.
@@ -94,9 +146,10 @@ remove(id)    // → Promise<void>
 // PosterSummary = Recipe senza attractors ed elements.
 ```
 
-Una proposta di API per Vercel: `GET /api/posters` (lista), `GET /api/posters/:id`,
-`PUT /api/posters/:id` (salva), `DELETE /api/posters/:id`, con lo stesso JSON. Le miniature
-arrivate da un server andranno sanificate prima di inserirle nella pagina.
+L'API (`server/posters-api.js`, la stessa in produzione e in sviluppo): `GET /api/posters` (lista),
+`GET /api/posters/:id`, `PUT /api/posters/:id` (salva), `DELETE /api/posters/:id`, con lo stesso
+JSON. Gli errori sono `{ "error": "messaggio in italiano" }` con lo stato HTTP (400, 404, 405, 413,
+422, 500). Nel database c'è una tabella `posters (id, number, recipe jsonb, saved_at)`.
 
 ## Export
 
@@ -198,10 +251,14 @@ src/sheet-view.js    il foglio SVG, zoom e pan
 src/attractors.js    attrattori: guide e strumenti sul foglio
 src/pad.js           il pad di partenza
 src/archive.js       pannello archivio e numerazione
-src/storage/         adattatore di salvataggio (local.js ora, api.js in futuro)
+src/storage/         adattatore di salvataggio (api.js: archivio condiviso; local.js: quello vecchio del browser)
 src/export.js        PDF e SVG
 src/recipe.js        ricetta → SVG (export e miniature)
 src/ui/              header, pannelli, dialoghi, stile
+api/posters.js               la funzione Vercel dell'archivio (Neon)
+server/                      API, SQL e controllo delle ricette, comuni a Vercel e sviluppo
+scripts/api-dev.mjs          l'API dentro npm run dev / preview (PGlite o DATABASE_URL)
+vercel.json                  riscrittura dell'API, header (noindex, CSP, cache)
 scripts/assets-manifest.mjs  elenco di figure (con nome, alias e popolo), stemmi e badge del numero (servito in sviluppo, scritto nella build)
 public/assets/gormiti/       gli SVG delle figure e nomi.json
 public/assets/stemmi/        gli SVG degli stemmi, uno per popolo
@@ -260,5 +317,5 @@ resta il badge a stella.
 - Stemmi: fatto (vedi «Stemmi»).
 - Numero: fatto (vedi «Numero»).
 - Popoli: fatto (vedi «Popoli»).
-- Archivio condiviso su Vercel: implementare `src/storage/api.js` (vedi sopra).
+- Archivio condiviso su Vercel: fatto (vedi «Archivio» e «Messa online»).
 - Eventuale conversione CMYK per la stampa.
